@@ -2,15 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="BakeryIQ">
-<meta name="theme-color" content="#1c1208">
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon.svg">
-<title>BakeryIQ</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BakeryIQ — Production Intelligence</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap');
 
@@ -276,96 +269,9 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
   .le-info{align-items:flex-start;grid-column:1/-1;flex-direction:row;gap:10px;flex-wrap:wrap;}
 }
 
-
-/* ── PIN LOCK SCREEN ── */
-#pinScreen{
-  position:fixed;inset:0;z-index:9999;
-  background:var(--ink);
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  gap:0;padding:20px;
-}
-.pin-logo{
-  font-family:'Libre Baskerville',serif;
-  font-size:2.2rem;font-weight:700;color:var(--aml);
-  margin-bottom:6px;
-}
-.pin-sub{font-size:.78rem;color:#7a5530;margin-bottom:36px;letter-spacing:.5px;}
-.pin-label{font-size:.75rem;font-weight:600;color:#9a7a60;text-transform:uppercase;
-  letter-spacing:.5px;margin-bottom:14px;}
-.pin-dots{display:flex;gap:14px;margin-bottom:32px;}
-.pin-dot{
-  width:16px;height:16px;border-radius:50%;
-  border:2px solid #3a2510;
-  background:transparent;
-  transition:background .15s,border-color .15s;
-}
-.pin-dot.filled{background:var(--aml);border-color:var(--aml);}
-.pin-dot.error{background:var(--re);border-color:var(--re);}
-.pin-keypad{
-  display:grid;grid-template-columns:repeat(3,1fr);
-  gap:12px;width:100%;max-width:280px;
-}
-.pin-key{
-  background:#2a1a08;border:none;border-radius:14px;
-  color:var(--aml);font-family:'DM Sans',sans-serif;
-  font-size:1.5rem;font-weight:600;
-  height:64px;cursor:pointer;
-  transition:background .12s,transform .08s;
-  -webkit-tap-highlight-color:transparent;
-  touch-action:manipulation;
-}
-.pin-key:active{background:#3a2810;transform:scale(.94);}
-.pin-key.del{font-size:1.1rem;color:#9a7a60;}
-.pin-key.empty{background:transparent;pointer-events:none;}
-.pin-error{color:var(--re);font-size:.78rem;font-weight:600;
-  margin-top:-16px;margin-bottom:8px;min-height:20px;
-  animation:shake .3s ease;}
-@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
-.pin-change-btn{margin-top:24px;background:none;border:none;
-  color:#5a3a20;font-size:.72rem;cursor:pointer;
-  font-family:'DM Sans',sans-serif;text-decoration:underline;
-  -webkit-tap-highlight-color:transparent;}
-
-/* Safe area padding for notched phones */
-@supports(padding:env(safe-area-inset-bottom)){
-  body{padding-bottom:env(safe-area-inset-bottom);}
-  .botnav{padding-bottom:env(safe-area-inset-bottom);}
-}
-
 </style>
 </head>
 <body>
-
-<!-- PIN LOCK SCREEN -->
-<div id="pinScreen">
-  <div class="pin-logo">🥐 BakeryIQ</div>
-  <div class="pin-sub">PRODUCTION INTELLIGENCE</div>
-  <div class="pin-label" id="pinLabel">Enter PIN</div>
-  <div class="pin-dots" id="pinDots">
-    <div class="pin-dot" id="pd0"></div>
-    <div class="pin-dot" id="pd1"></div>
-    <div class="pin-dot" id="pd2"></div>
-    <div class="pin-dot" id="pd3"></div>
-  </div>
-  <div class="pin-error" id="pinError"></div>
-  <div class="pin-keypad">
-    <button class="pin-key" onclick="pinKey('1')">1</button>
-    <button class="pin-key" onclick="pinKey('2')">2</button>
-    <button class="pin-key" onclick="pinKey('3')">3</button>
-    <button class="pin-key" onclick="pinKey('4')">4</button>
-    <button class="pin-key" onclick="pinKey('5')">5</button>
-    <button class="pin-key" onclick="pinKey('6')">6</button>
-    <button class="pin-key" onclick="pinKey('7')">7</button>
-    <button class="pin-key" onclick="pinKey('8')">8</button>
-    <button class="pin-key" onclick="pinKey('9')">9</button>
-    <button class="pin-key empty"></button>
-    <button class="pin-key" onclick="pinKey('0')">0</button>
-    <button class="pin-key del" onclick="pinDel()">⌫</button>
-  </div>
-  <button class="pin-change-btn" onclick="pinChange()">Change PIN</button>
-</div>
-
 <div id="loadingOverlay" style="position:fixed;inset:0;background:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:16px;">
   <div style="font-family:'Libre Baskerville',serif;font-size:1.6rem;font-weight:700;color:var(--aml)">🥐 BakeryIQ</div>
   <div style="color:#9a7a60;font-size:.82rem">Loading your data...</div>
@@ -705,11 +611,6 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
 
 <!-- ══════ PAGE: CATALOG ══════ -->
 <div class="page" id="page-catalog">
-  <div class="card" style="background:var(--ink);border-color:#3a2510;">
-    <div class="ct" style="color:var(--aml);">🔒 App PIN</div>
-    <p class="cs" style="color:#9a7a60;">Change the 4-digit PIN. Default is <strong style="color:var(--aml)">1234</strong> — update it now.</p>
-    <button class="btn" onclick="showChangePinScreen()">Change PIN</button>
-  </div>
   <div class="card">
     <div class="ct">🗂 Item Catalog</div>
     <p class="cs">All items ever tracked. Deactivate items you're not currently making — history is kept for when you bring them back.</p>
@@ -2342,130 +2243,10 @@ function renderRevenue(){
     <div class="ic ${c.cls}"><h4>${c.title}</h4><p>${c.text}</p></div>`).join('');
 }
 
-
-function showChangePinScreen(){
-  pinChange();
-  document.getElementById('pinScreen').style.display='flex';
-}
-
-// ════════════ PIN LOCK ════════════
-// Default PIN is 1234 — stored in localStorage (device-local, intentionally)
-// PIN protects the app but data is in Supabase — PIN is per-device access control
-
-const PIN_KEY = 'bakeryiq_pin';
-const PIN_UNLOCKED_KEY = 'bakeryiq_unlocked';
-let pinEntry = '';
-let pinSetting = false; // true when in "set new PIN" mode
-let pinFirstEntry = ''; // stores first entry during PIN change
-
-function getPin(){ return localStorage.getItem(PIN_KEY) || '1234'; }
-function setPin(p){ localStorage.setItem(PIN_KEY, p); }
-
-function pinKey(digit){
-  if(pinEntry.length >= 4) return;
-  pinEntry += digit;
-  updatePinDots();
-  if(pinEntry.length === 4){
-    setTimeout(()=> pinSetting ? handlePinSet() : handlePinCheck(), 120);
-  }
-}
-
-function pinDel(){
-  pinEntry = pinEntry.slice(0,-1);
-  updatePinDots();
-  document.getElementById('pinError').textContent = '';
-}
-
-function updatePinDots(){
-  for(let i=0;i<4;i++){
-    const d = document.getElementById('pd'+i);
-    d.classList.toggle('filled', i < pinEntry.length);
-    d.classList.remove('error');
-  }
-}
-
-function handlePinCheck(){
-  if(pinEntry === getPin()){
-    // Correct — unlock
-    sessionStorage.setItem(PIN_UNLOCKED_KEY,'1');
-    document.getElementById('pinScreen').style.display='none';
-    // Trigger app load
-    startApp();
-  } else {
-    // Wrong PIN
-    for(let i=0;i<4;i++) document.getElementById('pd'+i).classList.add('error');
-    document.getElementById('pinError').textContent = 'Wrong PIN. Try again.';
-    setTimeout(()=>{
-      pinEntry='';
-      updatePinDots();
-    }, 700);
-  }
-}
-
-function handlePinSet(){
-  if(!pinFirstEntry){
-    // First entry of new PIN
-    pinFirstEntry = pinEntry;
-    pinEntry = '';
-    updatePinDots();
-    document.getElementById('pinLabel').textContent = 'Confirm new PIN';
-    document.getElementById('pinError').textContent = '';
-  } else {
-    // Second entry — confirm match
-    if(pinEntry === pinFirstEntry){
-      setPin(pinEntry);
-      pinSetting = false;
-      pinFirstEntry = '';
-      pinEntry = '';
-      document.getElementById('pinLabel').textContent = 'Enter PIN';
-      document.getElementById('pinError').textContent = '';
-      document.getElementById('pinScreen').style.display='none';
-      toast('PIN updated ✓');
-    } else {
-      for(let i=0;i<4;i++) document.getElementById('pd'+i).classList.add('error');
-      document.getElementById('pinError').textContent = "PINs don't match. Start again.";
-      setTimeout(()=>{
-        pinEntry=''; pinFirstEntry='';
-        document.getElementById('pinLabel').textContent = 'Set new PIN';
-        updatePinDots();
-      }, 800);
-    }
-  }
-}
-
-function pinChange(){
-  pinSetting = true;
-  pinEntry = '';
-  pinFirstEntry = '';
-  document.getElementById('pinLabel').textContent = 'Set new PIN';
-  document.getElementById('pinError').textContent = '';
-  updatePinDots();
-}
-
-function checkPinOnLoad(){
-  // If already unlocked this session, skip PIN screen
-  if(sessionStorage.getItem(PIN_UNLOCKED_KEY)==='1'){
-    document.getElementById('pinScreen').style.display='none';
-    return true;
-  }
-  return false;
-}
-
-// ════════════ SERVICE WORKER ════════════
-if('serviceWorker' in navigator){
-  window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('sw.js')
-      .then(r => console.log('SW registered:', r.scope))
-      .catch(e => console.log('SW failed:', e));
-  });
-}
-
 // ════════════ TOAST + INIT ════════════
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',2200);}
 
-async function startApp(){
-  const ov=document.getElementById('loadingOverlay');
-  if(ov) ov.style.display='flex';
+(async()=>{
   try{updateNav();}catch(e){}
   await load();
   initLogDate();
@@ -2473,16 +2254,9 @@ async function startApp(){
   autoAddCarryForwards();
   renderStats();
   updateNav();
+  // Hide loading overlay
+  const ov=document.getElementById('loadingOverlay');
   if(ov) ov.style.display='none';
-}
-
-// On page load: check PIN first
-(()=>{
-  if(checkPinOnLoad()){
-    // Already unlocked this session — start app directly
-    startApp();
-  }
-  // else: PIN screen is shown, startApp() called after correct PIN
 })();
 </script>
 </body>
