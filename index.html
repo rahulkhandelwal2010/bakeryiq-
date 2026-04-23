@@ -41,7 +41,7 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--ink);min-
 .nbadge{background:#321a08;color:var(--aml);font-size:.62rem;font-weight:700;padding:3px 9px;border-radius:20px;}
 
 /* PAGES */
-.page{display:none;padding:20px 18px 70px;max-width:1120px;margin:0 auto;animation:fi .18s ease;}
+.page{display:none;padding:20px 18px 80px;max-width:1120px;margin:0 auto;animation:fi .18s ease;}
 .page.active{display:block;}
 @keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 
@@ -51,7 +51,7 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--ink);min-
 .cs{font-size:.73rem;color:var(--mu);margin-bottom:12px;line-height:1.6;}
 
 /* STATS */
-.sr{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:18px;}
+.sr{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px;}
 .st{background:var(--s);border-radius:11px;padding:13px 10px;box-shadow:var(--sh);border:1px solid var(--bd);text-align:center;}
 .sn{font-family:'Libre Baskerville',serif;font-size:1.7rem;font-weight:700;color:var(--am);line-height:1;}
 .sl{font-size:.6rem;font-weight:700;color:var(--mu);margin-top:3px;text-transform:uppercase;letter-spacing:.5px;}
@@ -194,10 +194,10 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
 }
 
 /* ── BOTTOM NAV (mobile only) ── */
-.botnav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:300;
+.botnav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:300;min-height:56px;
   background:var(--ink);border-top:1px solid #3a2510;height:58px;
   box-shadow:0 -2px 12px rgba(0,0,0,.3);}
-.botnav-inner{display:grid;grid-template-columns:repeat(6,1fr);height:100%;}
+.botnav-inner{display:grid;grid-template-columns:repeat(5,1fr);height:100%;}
 .bnav{display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:2px;cursor:pointer;padding:4px 2px;border:none;background:transparent;
   -webkit-tap-highlight-color:transparent;touch-action:manipulation;}
@@ -229,21 +229,92 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
 
 /* ── MOBILE BREAKPOINT ── */
 @media(max-width:640px){
-  html{font-size:14px;}
+  /* ── Base ── */
+  html{font-size:15px;}
+  body{padding-bottom:72px;}
   .nav{display:none;}
   .botnav{display:block;}
-  body{padding-bottom:58px;}
-  .statrow{grid-template-columns:repeat(3,1fr);}
+  .page{padding:10px 10px 80px;}
+  .card{padding:14px 12px;border-radius:12px;margin-bottom:12px;}
+
+  /* ── Stat row: 3 cols on mobile ── */
+  .sr{grid-template-columns:repeat(3,1fr);gap:6px;}
+  .st{padding:10px 6px;}
+  .sn{font-size:1.1rem;}
+  .sl{font-size:.6rem;}
+
+  /* ── Two-col grids go single col ── */
   .two{grid-template-columns:1fr;}
   .ig{grid-template-columns:1fr;}
-  .page{padding:12px 11px 16px;}
+
+  /* ── Forms & inputs ── */
   input[type=text],input[type=number],input[type=date],select{
-    padding:11px 12px;font-size:1rem;
+    padding:12px 12px;font-size:1rem;width:100%;border-radius:9px;
   }
-  .btn{padding:12px 18px;}
-  #toast{bottom:66px;left:50%;transform:translateX(-50%);
-    border-radius:22px;padding:10px 20px;white-space:nowrap;}
-  .bl2{width:80px;}
+  .btn{padding:13px 18px;font-size:.82rem;border-radius:9px;}
+  .fl{font-size:.72rem;}
+
+  /* ── Log form: stack vertically on mobile ── */
+  .log-form-row{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+  .log-form-row .fi{width:100%;max-width:100% !important;}
+  .log-form-row select{width:100%;}
+  .log-form-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .log-form-btns .btn{width:100%;}
+
+  /* ── Log entry rows ── */
+  .log-entry{
+    display:flex;flex-direction:column;gap:8px;
+    padding:12px;border-radius:12px;
+  }
+  .le-name-row{display:flex;justify-content:space-between;align-items:center;}
+  .le-name{font-size:.9rem;}
+  .le-fields-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .le-field{min-width:unset;width:100%;}
+  .le-field input{width:100%;font-size:1.1rem;padding:10px 8px;}
+  .le-info{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+
+  /* ── Tables: hide on mobile, shown as cards ── */
+  .tw{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .tw table{min-width:520px;}
+
+  /* ── Day summary modal ── */
+  .mo{padding:18px 14px 24px;margin:12px;border-radius:16px;}
+
+  /* ── Revenue charts ── */
+  #rev-weekly-chart > div,
+  #rev-monthly-chart > div{min-width:44px;}
+
+  /* ── Weekly plan grid ── */
+  .wg{font-size:.7rem;}
+  .wgc{padding:4px 2px;}
+
+  /* ── Toast ── */
+  #toast{bottom:76px;left:50%;transform:translateX(-50%);
+    border-radius:22px;padding:10px 20px;white-space:nowrap;font-size:.82rem;}
+
+  /* ── Bottom nav bigger touch targets ── */
+  .bnav{font-size:.58rem;}
+  .bnav .ico{font-size:1.2rem;}
+
+  /* ── Section titles ── */
+  .ct{font-size:.9rem;}
+  .cs{font-size:.78rem;}
+
+  /* ── Insight cards ── */
+  .ic{padding:12px;}
+  .ic h4{font-size:.8rem;}
+  .ic p{font-size:.72rem;}
+
+  /* ── Bar charts ── */
+  .br{gap:4px;}
+  .bl2{width:70px;font-size:.7rem;}
+
+  /* ── Plan table ── */
+  .rec-n{font-size:1.2rem;}
+
+  /* ── Misc ── */
+  .bl2{width:72px;}
+  h4{font-size:.85rem;}
 }
 
 
@@ -364,12 +435,11 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
 <!-- BOTTOM NAV (mobile) -->
 <div class="botnav">
   <div class="botnav-inner">
-    <button class="bnav active" id="bn-log" onclick="gTm('log')"><span class="ico">📋</span><span class="lbl">Log</span></button>
-    <button class="bnav" id="bn-intel" onclick="gTm('intel')"><span class="ico">🧠</span><span class="lbl">Insights</span></button>
-    <button class="bnav" id="bn-daily" onclick="gTm('daily')"><span class="ico">🎯</span><span class="lbl">Daily</span></button>
-    <button class="bnav" id="bn-revenue" onclick="gTm('revenue')"><span class="ico">💰</span><span class="lbl">Revenue</span></button>
-    <button class="bnav" id="bn-history" onclick="gTm('history')"><span class="ico">📅</span><span class="lbl">History</span></button>
-    <button class="bnav" id="bn-catalog" onclick="gTm('catalog')"><span class="ico">🗂</span><span class="lbl">Catalog</span></button>
+    <button class="bnav active" id="bn-log"     onclick="gTm('log')">    <span class="ico">📋</span><span class="lbl">Log</span></button>
+    <button class="bnav"        id="bn-intel"   onclick="gTm('intel')">  <span class="ico">🧠</span><span class="lbl">Insights</span></button>
+    <button class="bnav"        id="bn-daily"   onclick="gTm('daily')">  <span class="ico">🎯</span><span class="lbl">Plan</span></button>
+    <button class="bnav"        id="bn-revenue" onclick="gTm('revenue')"><span class="ico">💰</span><span class="lbl">Revenue</span></button>
+    <button class="bnav"        id="bn-catalog" onclick="gTm('catalog')"><span class="ico">🗂</span><span class="lbl">Catalog</span></button>
   </div>
 </div>
 
@@ -407,7 +477,7 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
 
 <!-- DAY SUMMARY MODAL -->
 <div class="mb" id="summaryModal" onclick="if(event.target===this)closeSummary()">
-  <div class="mo" style="max-width:520px;padding:22px 20px 32px;">
+  <div class="mo" style="max-width:520px;padding:18px 14px 28px;width:calc(100% - 24px);margin:0 auto;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
       <div style="font-family:'Libre Baskerville',serif;font-size:1.1rem;font-weight:700;" id="sumTitle">Day Saved</div>
       <button onclick="closeSummary()" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--mu);padding:2px 6px;">✕</button>
@@ -438,20 +508,22 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
   <div class="card">
     <div class="ct">📋 Daily Log</div>
 
-    <!-- Date + Add-item row -->
-    <div class="fr" style="margin-bottom:14px;gap:8px;">
-      <div class="fi" style="max-width:170px;">
+    <!-- Date + Add-item row — mobile stacked -->
+    <div class="log-form-row">
+      <div class="fi" style="max-width:100%;">
         <label class="fl">Date</label>
         <input type="date" id="logDate" onchange="onDateChange()">
       </div>
-      <div class="fi">
+      <div class="fi" style="max-width:100%;">
         <label class="fl">Add Item</label>
-        <select id="itemPicker" style="font-size:.88rem;">
+        <select id="itemPicker">
           <option value="">— select item —</option>
         </select>
       </div>
-      <button class="btn bto" onclick="addLogRow()" style="margin-top:auto;padding:9px 14px;">+ Add</button>
-      <button class="btn btg" onclick="openModal()" style="margin-top:auto;padding:9px 14px;" title="Add new item to catalog">New Item</button>
+      <div class="log-form-btns">
+        <button class="btn bto" onclick="addLogRow()">+ Add Item</button>
+        <button class="btn btg" onclick="openModal()">+ New Item</button>
+      </div>
     </div>
 
     <!-- Log entries list -->
@@ -511,8 +583,8 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
   <div class="card">
     <div class="ct">🎯 Smart Daily Production Plan</div>
     <p class="cs">Self-adjusting plan based on your actual sales history. New items learn for 10 days first. Multi-day items only show when a new batch is needed.</p>
-    <div class="fr">
-      <div class="fi" style="max-width:190px;">
+    <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+      <div class="fi">
         <label class="fl">Plan for Day</label>
         <select id="pd">
           <option value="0">Sunday</option><option value="1">Monday</option>
@@ -521,7 +593,7 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
           <option value="6">Saturday</option>
         </select>
       </div>
-      <button class="btn" onclick="genDaily()" style="margin-top:auto;">Generate Plan</button>
+      <button class="btn" onclick="genDaily()">Generate</button>
     </div>
   </div>
   <div id="de" class="empty"><div class="ico">🎯</div><p>Click Generate Plan.<br>Needs 3+ days of data.</p></div>
@@ -967,8 +1039,10 @@ function renderEntry(itemId){
   const revHtml = rev > 0 ? `₹${rev.toLocaleString('en-IN',{maximumFractionDigits:0})}` : '';
 
   const innerHTML = `
-    <div class="le-name">${c.name} ${typeTag} ${priceTag}</div>
-    <button class="le-del" onclick="removeEntry('${itemId}')" title="Remove">✕</button>
+    <div class="le-name-row">
+      <div class="le-name">${c.name} ${typeTag} ${priceTag}</div>
+      <button class="le-del" onclick="removeEntry('${itemId}')" title="Remove">✕</button>
+    </div>
     <div class="le-fields-row">
       <div class="le-field">
         <label>Made Today</label>
@@ -982,12 +1056,12 @@ function renderEntry(itemId){
           onchange="updateEntry('${itemId}','sold',+this.value)"
           onblur="updateEntry('${itemId}','sold',+this.value)">
       </div>
-      <div class="le-info">
-        ${cfTag}
-        <div class="le-result" id="ler-${itemId}">${resultHtml}</div>
-        <div class="le-rev" id="lerev-${itemId}">${revHtml}</div>
-        ${soTag ? `<div id="leso-${itemId}">${soTag}</div>` : `<div id="leso-${itemId}"></div>`}
-      </div>
+    </div>
+    <div class="le-info">
+      ${cfTag}
+      <div class="le-result" id="ler-${itemId}">${resultHtml}</div>
+      <div class="le-rev" id="lerev-${itemId}">${revHtml}</div>
+      ${soTag ? `<div id="leso-${itemId}">${soTag}</div>` : `<div id="leso-${itemId}"></div>`}
     </div>`;
 
   if(existing){
