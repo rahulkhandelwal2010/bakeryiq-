@@ -2964,6 +2964,31 @@ async function startApp(){
   if(ov) ov.style.display='none';
 }
 
+// Reload data from Supabase whenever app comes back into view
+// Handles: switching tabs, locking/unlocking phone, returning from background
+document.addEventListener('visibilitychange', async ()=>{
+  if(document.visibilityState === 'visible'){
+    // Only reload if PIN is already unlocked (session active)
+    if(sessionStorage.getItem(PIN_SESSION)==='1'){
+      await load();
+      initLogDate();
+      buildItemPicker();
+      autoAddCarryForwards();
+      renderStats();
+      updateNav();
+      // Refresh whichever tab is currently open
+      const activePage = document.querySelector('.page.active');
+      if(activePage){
+        const id = activePage.id.replace('page-','');
+        if(id==='intel')    try{renderIntel();}catch(e){}
+        if(id==='revenue')  try{renderRevenue();}catch(e){}
+        if(id==='history')  try{renderHistory();}catch(e){}
+        if(id==='catalog')  try{renderCatalog();}catch(e){}
+      }
+    }
+  }
+});
+
 (()=>{
   if(sessionStorage.getItem(PIN_SESSION)==='1'){
     document.getElementById('pinScreen').style.display='none';
