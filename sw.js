@@ -1,68 +1,59 @@
-// BakeryIQ Service Worker
-// Caches the app shell for offline use
-// Data always syncs to Supabase when online
+// Chabua Bakery — Service Worker
+// Strategy: Network-first for HTML (always get latest updates)
+//           Cache-first for assets (fonts, icons — rarely change)
+//           Never cache Supabase API calls
 
-const CACHE = 'bakeryiq-v1';
-const SHELL = [
-  '/bakeryiq-/',
-  '/bakeryiq-/index.html',
-  '/bakeryiq-/manifest.json',
-  '/bakeryiq-/icon.svg',
-  'https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap'
-];
+const CACHE = 'chabua-v4';
 
-// Install: cache the app shell
+// Install — skip waiting so new SW activates immediately
 self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE).then(cache => {
-      // Cache core files, ignore font failures (network dependent)
-      return Promise.allSettled(SHELL.map(url => cache.add(url)));
-    }).then(() => self.skipWaiting())
-  );
+  self.skipWaiting();
 });
 
-// Activate: clean old caches
+// Activate — delete ALL old caches immediately
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    ).then(() => self.clients.claim())
+    caches.keys()
+      .then(keys => Promise.all(keys.map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
 });
 
-// Fetch strategy:
-// - Supabase API calls: network first, no cache (always need fresh data)
-// - App shell (HTML, manifest, icon): cache first, then network
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
-  // Never cache Supabase API calls
-  if (url.hostname.includes('supabase.co')) {
+  // 1. Never intercept Supabase — always go to network
+  if(url.hostname.includes('supabase.co')){
+    e.respondWith(fetch(e.request));
+    return;
+  }
+
+  // 2. HTML pages — network first, cache fallback (ensures latest version always loads)
+  if(e.request.destination === 'document' ||
+     url.pathname.endsWith('.html') ||
+     url.pathname.endsWith('/')){
     e.respondWith(
-      fetch(e.request).catch(() =>
-        new Response(JSON.stringify({error: 'offline'}),
-          {status: 503, headers: {'Content-Type': 'application/json'}})
-      )
+      fetch(e.request)
+        .then(res => {
+          const clone = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
+          return res;
+        })
+        .catch(() => caches.match(e.request))
     );
     return;
   }
 
-  // For everything else: cache first, network fallback
+  // 3. Everything else — cache first, network fallback
   e.respondWith(
     caches.match(e.request).then(cached => {
-      if (cached) return cached;
-      return fetch(e.request).then(response => {
-        // Cache successful GET responses for the app shell
-        if (e.request.method === 'GET' && response.status === 200) {
-          const clone = response.clone();
-          caches.open(CACHE).then(cache => cache.put(e.request, clone));
+      if(cached) return cached;
+      return fetch(e.request).then(res => {
+        if(res.ok){
+          const clone = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
         }
-        return response;
-      }).catch(() => {
-        // If offline and not cached, return the main app
-        if (e.request.destination === 'document') {
-          return caches.match('/index.html');
-        }
+        return res;
       });
     })
   );
