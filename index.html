@@ -651,6 +651,7 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
   <div class="tab" onclick="gT('revenue',this)">💰 Revenue</div>
   <div class="tab" onclick="gT('catalog',this)">🗂 Catalog</div>
   <div class="nav-r">
+    <span id="saveStatus" style="display:none;font-size:.68rem;margin-right:8px;"></span>
     <span class="nbadge" id="nb1">0 days</span>
     <span class="nbadge" id="nb2" style="background:#2a1406">0 items</span>
   </div>
@@ -801,6 +802,7 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
       <div>
         <div id="live-rev" style="font-size:.88rem;font-weight:700;color:var(--gr)"></div>
         <div id="live-summary" style="font-size:.72rem;color:var(--mu);margin-top:2px;"></div>
+        <div id="saveStatusMobile" style="font-size:.7rem;margin-top:3px;display:none;"></div>
       </div>
       <div style="display:flex;gap:8px;">
         <button class="btn btg" onclick="clearLogEntries()">Clear</button>
@@ -1083,8 +1085,47 @@ async function load(){
     // Keep whatever S has — don't overwrite with sample data
   }
 }
+// Save status: 'idle' | 'saving' | 'error'
+let _saveStatus = 'idle';
+let _pendingRetry = null;
+
+function setSaveStatus(status, msg){
+  _saveStatus = status;
+  const el = document.getElementById('saveStatus');
+  const elMob = document.getElementById('saveStatusMobile');
+  if(!el && !elMob) return;
+  const showEl = (target, text, color)=>{
+    if(!target) return;
+    target.textContent = text;
+    target.style.color = color;
+    target.style.display = text ? (target.id==='saveStatusMobile' ? 'block' : 'inline-block') : 'none';
+  };
+  if(status === 'saving'){
+    showEl(el, '⟳ Saving...', '#9a7050');
+    showEl(elMob, '⟳ Saving...', '#9a7050');
+  } else if(status === 'error'){
+    showEl(el, '⚠ Save failed — will retry', 'var(--re)');
+    showEl(elMob, '⚠ Save failed — will retry', 'var(--re)');
+  } else {
+    showEl(el, '', '');
+    showEl(elMob, '', '');
+  }
+}
+
 function save(){
-  saveAll().catch(e=>console.error('Save:',e.message));
+  setSaveStatus('saving');
+  saveAll()
+    .then(()=>{
+      setSaveStatus('idle');
+      if(_pendingRetry){ clearTimeout(_pendingRetry); _pendingRetry = null; }
+    })
+    .catch(e=>{
+      console.error('Save failed:', e.message);
+      setSaveStatus('error');
+      // Auto-retry after 5 seconds
+      if(_pendingRetry) clearTimeout(_pendingRetry);
+      _pendingRetry = setTimeout(()=>{ save(); }, 5000);
+    });
   try{updateNav();}catch(e){}
 }
 
@@ -1167,6 +1208,44 @@ function saveItem(){
  */
 
 let F = {}; // { itemId: {made:0, sold:0} }
+
+// ════ Session persistence — survives tab close/refresh ════
+const DRAFT_KEY = 'chabua_draft';
+function persistDraft(){
+  try{
+    const dateStr = document.getElementById('logDate')?.value || '';
+    if(!dateStr || !Object.keys(F).length){
+      localStorage.removeItem(DRAFT_KEY);
+      return;
+    }
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({date: dateStr, F}));
+  }catch(e){ /* localStorage full or disabled — non-fatal */ }
+}
+function restoreDraft(){
+  try{
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if(!raw) return false;
+    const {date, F: savedF} = JSON.parse(raw);
+    const currentDate = document.getElementById('logDate')?.value;
+    if(!date || date !== currentDate) return false; // date changed — skip
+    F = savedF || {};
+    // Re-render all rows
+    Object.keys(F).forEach(id=>{
+      if(cat(id)) renderTableRow(id);
+    });
+    if(Object.keys(F).length){
+      document.getElementById('logTableWrap').style.display='block';
+      buildItemPicker();
+      updateLiveSummary();
+      updateTableFooter();
+      toast('Restored unsaved draft');
+    }
+    return true;
+  }catch(e){ return false; }
+}
+function clearDraft(){
+  try{ localStorage.removeItem(DRAFT_KEY); }catch(e){}
+}
 
 function initLogDate(){
   const d = new Date().toISOString().split('T')[0];
@@ -1304,6 +1383,29 @@ function autoAddCarryForwards(){
   buildItemPicker();
   updateCFBanner();
   updateLiveSummary();
+  // Try to restore any unsaved draft for this date
+  restoreDraft();
+}
+
+// Returns a warning string if made/sold look abnormal vs recent history, else ''
+function checkOutlier(itemId, made, sold){
+  const c = cat(itemId); if(!c) return '';
+  // Get up to last 30 days of entries for this item
+  const recent = S.logs.slice(-30)
+    .flatMap(l => l.entries.filter(e => e.id === itemId));
+  if(recent.length < 5) return ''; // need some history first
+
+  const maxMade = Math.max(...recent.map(e => e.made || 0), 1);
+  const maxSold = Math.max(...recent.map(e => e.sold || 0), 1);
+
+  // Flag if value is > 3× the historical max — likely typo
+  if(made > maxMade * 3){
+    return `⚠ "${made}" for Made seems high for ${c.name}.\nYour highest in the last 30 days was ${maxMade}. Is this correct?`;
+  }
+  if(sold > maxSold * 3){
+    return `⚠ "${sold}" for Sold seems high for ${c.name}.\nYour highest in the last 30 days was ${maxSold}. Is this correct?`;
+  }
+  return '';
 }
 
 function addLogRow(){
@@ -1313,10 +1415,16 @@ function addLogRow(){
   const sold  = Math.max(0, +(document.getElementById('addSold').value)||0);
   if(!id){ toast('Select an item first'); return; }
   if(F[id]){ toast('Already in table'); return; }
+  // Outlier warning — catch typos like "500" instead of "50"
+  const warning = checkOutlier(id, made, sold);
+  if(warning && !confirm(warning + '\n\nContinue adding this entry?')){
+    return;
+  }
   const dateStr = document.getElementById('logDate').value;
   const cf = getCarryForward(id, dateStr);
   F[id] = {made, sold, cf};   // store cf too so user can edit it
   renderTableRow(id);
+  persistDraft();
   buildItemPicker();
   updateLiveSummary();
   updateTableFooter();
@@ -1499,6 +1607,7 @@ function updateTableEntry(itemId, key, val){
   // Sync F[itemId] cf into carryIn for saving compatibility
   updateLiveSummary();
   updateTableFooter();
+  persistDraft();
 }
 
 function updateTableFooter(){
@@ -1539,6 +1648,7 @@ function removeEntry(itemId){
   updateCFBanner();
   updateLiveSummary();
   updateTableFooter();
+  persistDraft();
 }
 
 function clearLogEntries(){
@@ -1550,6 +1660,7 @@ function clearLogEntries(){
   buildItemPicker();
   updateCFBanner();
   updateLiveSummary();
+  clearDraft();
   autoAddCarryForwards();
 }
 
@@ -1615,6 +1726,7 @@ function saveDay(){
   S.logs.push({date:dv, dow, entries});
   S.logs.sort((a,b)=>a.date.localeCompare(b.date));
   save();
+  clearDraft();  // draft saved successfully
   showDaySummary(dv, entries);
   F={};
   document.getElementById('logEntries').innerHTML='';
