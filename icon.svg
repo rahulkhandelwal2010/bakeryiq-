@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="80" fill="#1c1208"/>
+  <!-- Croissant shape -->
+  <g transform="translate(256,220)">
+    <!-- Main croissant body -->
+    <ellipse cx="0" cy="0" rx="140" ry="65" fill="#d4862a" transform="rotate(-20)"/>
+    <!-- Left horn -->
+    <ellipse cx="-110" cy="30" rx="55" ry="28" fill="#b8600a" transform="rotate(35,-110,30)"/>
+    <!-- Right horn -->
+    <ellipse cx="110" cy="30" rx="55" ry="28" fill="#b8600a" transform="rotate(-35,110,30)"/>
+    <!-- Highlight -->
+    <ellipse cx="20" cy="-10" rx="80" ry="32" fill="#e8a055" opacity="0.5" transform="rotate(-20)"/>
+  </g>
+  <!-- Text: IQ -->
+  <text x="256" y="390" font-family="Georgia,serif" font-size="80" font-weight="bold"
+    fill="#d4862a" text-anchor="middle" letter-spacing="4">IQ</text>
+  <!-- Small dots for decoration -->
+  <circle cx="160" cy="160" r="8" fill="#b8600a" opacity="0.4"/>
+  <circle cx="352" cy="160" r="8" fill="#b8600a" opacity="0.4"/>
+  <circle cx="120" cy="340" r="6" fill="#b8600a" opacity="0.3"/>
+  <circle cx="392" cy="340" r="6" fill="#b8600a" opacity="0.3"/>
+</svg>
