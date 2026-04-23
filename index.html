@@ -319,33 +319,67 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
 
 
 /* ── NEW LOG ENTRY ROWS ── */
-.log-entry{display:grid;grid-template-columns:1fr auto auto auto auto;align-items:center;gap:10px;
-  padding:10px 12px;background:var(--s2);border:1.5px solid var(--bd);border-radius:10px;margin-bottom:8px;}
-.le-name{font-weight:700;font-size:.88rem;line-height:1.2;}
-.le-meta{font-size:.65rem;color:var(--mu);margin-top:2px;}
-.le-field{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:68px;}
-.le-field label{font-size:.6rem;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.4px;}
-.le-field input{width:68px;font-size:1rem;font-weight:700;text-align:center;padding:7px 6px;
-  border:1.5px solid var(--bd);border-radius:7px;background:var(--s);-webkit-appearance:none;}
-.le-field input:focus{outline:none;border-color:var(--am);background:#fff;box-shadow:0 0 0 3px rgba(184,96,10,.12);}
-.le-info{display:flex;flex-direction:column;align-items:flex-end;gap:3px;min-width:80px;}
-.le-cf{font-size:.7rem;color:var(--bl);font-weight:600;}
-.le-result{font-size:.75rem;font-weight:700;}
-.le-rev{font-size:.72rem;color:var(--gr);font-weight:700;}
-.le-del{background:none;border:none;color:var(--re);cursor:pointer;font-size:1rem;padding:4px;
-  border-radius:6px;-webkit-tap-highlight-color:transparent;opacity:.6;}
-.le-del:hover{opacity:1;background:var(--reb);}
-.le-stockout{font-size:.65rem;color:var(--re);font-weight:700;background:var(--reb);padding:2px 7px;border-radius:10px;}
-/* CF = carry forward highlight */
-.log-entry.has-cf{border-color:#b0c8f0;background:var(--blb);}
-/* Mobile stacked layout */
-@media(max-width:640px){
-  .log-entry{grid-template-columns:1fr auto;grid-template-rows:auto auto;gap:8px;}
-  .le-fields-row{display:flex;gap:8px;grid-column:1/-1;}
-  .le-field{min-width:60px;}
-  .le-field input{width:60px;font-size:.95rem;}
-  .le-info{align-items:flex-start;grid-column:1/-1;flex-direction:row;gap:10px;flex-wrap:wrap;}
+
+/* ── Inline Log Entry (new design) ── */
+.log-entry{
+  background:var(--s2);
+  border:1.5px solid var(--bd);
+  border-radius:12px;
+  margin-bottom:10px;
+  overflow:hidden;
+  transition:border-color .2s;
 }
+.log-entry.has-cf{border-color:#b0c8f0;background:var(--blb);}
+
+/* Name row */
+.le-header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:11px 14px 0;
+}
+.le-name{font-weight:700;font-size:.88rem;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.le-del{background:none;border:none;color:var(--mu);cursor:pointer;
+  font-size:.9rem;padding:4px 6px;border-radius:6px;line-height:1;
+  -webkit-tap-highlight-color:transparent;}
+.le-del:active{background:var(--reb);color:var(--re);}
+
+/* Input row */
+.le-inputs{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  padding:10px 14px;
+}
+.le-input-group{display:flex;flex-direction:column;gap:4px;}
+.le-input-label{
+  font-size:.62rem;font-weight:700;color:var(--mu);
+  text-transform:uppercase;letter-spacing:.4px;
+}
+.le-input-field{
+  font-size:1.4rem;font-weight:700;text-align:center;
+  padding:10px 8px;border:1.5px solid var(--bd);border-radius:9px;
+  background:var(--s);width:100%;color:var(--ink);
+  -webkit-appearance:none;appearance:none;
+}
+.le-input-field:focus{
+  outline:none;border-color:var(--am);
+  box-shadow:0 0 0 3px rgba(184,96,10,.12);
+}
+
+/* Result row */
+.le-result-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 14px 11px;
+  border-top:1px solid var(--bd);
+  background:var(--s);
+  flex-wrap:wrap;gap:6px;
+}
+.le-cf-tag{font-size:.68rem;color:var(--bl);font-weight:600;
+  background:var(--blb);padding:2px 8px;border-radius:10px;}
+.le-result{font-size:.78rem;font-weight:700;}
+.le-rev-tag{font-size:.75rem;font-weight:700;color:var(--gr);}
+.le-stockout{font-size:.65rem;color:var(--re);font-weight:700;
+  background:var(--reb);padding:2px 8px;border-radius:10px;}
+
 
 
 /* ── PIN SCREEN ── */
@@ -373,6 +407,193 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
 @supports(padding:env(safe-area-inset-bottom)){
   .botnav{padding-bottom:env(safe-area-inset-bottom);}
 }
+
+
+/* ── Mobile intel cards ── */
+.intel-card{background:var(--s);border:1px solid var(--bd);border-radius:12px;
+  padding:14px;margin-bottom:10px;}
+.intel-card-name{font-weight:700;font-size:.9rem;margin-bottom:6px;
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.intel-card-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.intel-card-stat{background:var(--s2);border-radius:8px;padding:8px 10px;}
+.intel-card-stat-label{font-size:.6rem;font-weight:700;color:var(--mu);
+  text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;}
+.intel-card-stat-val{font-size:.88rem;font-weight:700;color:var(--ink);}
+.intel-card-signal{font-size:.72rem;font-weight:600;margin-top:8px;
+  padding:6px 10px;border-radius:8px;background:var(--s2);}
+@media(min-width:641px){.intel-mobile-cards{display:none;}}
+@media(max-width:640px){
+  .intel-desktop-table{display:none;}
+  .intel-mobile-cards{display:block;}
+}
+
+
+/* ── Plan mobile cards ── */
+.plan-card-item{background:var(--s);border:1px solid var(--bd);border-radius:12px;
+  padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
+.plan-card-rec{font-family:'Libre Baskerville',serif;font-size:2rem;font-weight:700;
+  min-width:52px;text-align:center;line-height:1;}
+.plan-card-rec small{display:block;font-family:'DM Sans',sans-serif;font-size:.6rem;
+  font-weight:400;color:var(--mu);text-transform:uppercase;letter-spacing:.3px;}
+.plan-card-info{flex:1;}
+.plan-card-name{font-weight:700;font-size:.88rem;margin-bottom:4px;}
+.plan-card-signal{font-size:.72rem;margin-bottom:3px;}
+.plan-card-reason{font-size:.68rem;color:var(--mu);}
+.skip-card-item{padding:10px 12px;background:var(--s2);border-radius:10px;
+  margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;}
+.skip-card-name{font-weight:700;font-size:.85rem;}
+.skip-card-info{font-size:.72rem;color:var(--mu);margin-top:2px;}
+.skip-card-carry{font-size:.82rem;font-weight:700;color:var(--bl);}
+@media(min-width:641px){.plan-mobile-view{display:none;}}
+@media(max-width:640px){
+  #plan-make-card .tw{display:none;}
+  #plan-skip-card .tw{display:none;}
+  .plan-mobile-view{display:block;}
+}
+
+
+@media(max-width:640px){
+  #rev-stats-row{grid-template-columns:repeat(3,1fr) !important;}
+  #rev-stats-row .st:nth-child(4),
+  #rev-stats-row .st:nth-child(5){grid-column:span 1;}
+}
+
+
+/* ── Catalog mobile cards ── */
+@media(max-width:640px){
+  .catalog-desktop{display:none;}
+  .catalog-mobile{display:block;}
+}
+@media(min-width:641px){
+  .catalog-mobile{display:none;}
+}
+.cat-card{background:var(--s);border:1px solid var(--bd);border-radius:12px;
+  padding:12px;margin-bottom:8px;}
+.cat-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.cat-card-name{font-weight:700;font-size:.9rem;}
+.cat-card-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;align-items:center;}
+.cat-card-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.cat-card-stat{font-size:.72rem;color:var(--mu);}
+.cat-card-stat strong{color:var(--ink);font-size:.82rem;}
+.cat-card-price{display:flex;align-items:center;gap:8px;background:var(--s2);
+  border-radius:8px;padding:8px 10px;}
+.cat-card-price label{font-size:.68rem;font-weight:700;color:var(--mu);
+  text-transform:uppercase;white-space:nowrap;}
+.cat-card-price input{flex:1;min-width:0;font-size:1rem;font-weight:700;
+  padding:6px 8px;border:1.5px solid var(--bd);border-radius:7px;
+  background:var(--s);width:100%;}
+
+
+@media(max-width:640px){
+  .mb{align-items:flex-end;padding:0;}
+  .mo{border-radius:20px 20px 0 0;max-height:90vh;overflow-y:auto;
+    -webkit-overflow-scrolling:touch;padding-bottom:env(safe-area-inset-bottom,20px);}
+}
+
+
+/* ── Log Add Row ── */
+.log-add-row{
+  display:grid;
+  grid-template-columns:1fr 72px 72px auto;
+  gap:8px;
+  align-items:flex-end;
+}
+@media(max-width:420px){
+  .log-add-row{
+    grid-template-columns:1fr 64px 64px auto;
+    gap:6px;
+  }
+}
+.log-add-select select,
+.log-add-qty input{
+  width:100%;
+}
+.log-add-qty input{
+  text-align:center;
+  font-size:1rem;
+  font-weight:700;
+}
+
+/* ── Log Table ── */
+.log-table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:.82rem;
+}
+.log-table th{
+  background:var(--s2);
+  color:var(--mu);
+  font-size:.65rem;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.4px;
+  padding:8px 10px;
+  text-align:left;
+  border-bottom:2px solid var(--bd);
+  white-space:nowrap;
+}
+.log-table td{
+  padding:9px 10px;
+  border-bottom:1px solid var(--s2);
+  vertical-align:middle;
+}
+.log-table tbody tr:last-child td{border-bottom:none;}
+.log-table tbody tr:hover td{background:var(--s2);}
+
+/* Item name cell */
+.lt-name{font-weight:700;font-size:.82rem;}
+.lt-type{font-size:.6rem;color:var(--mu);}
+
+/* Editable number cells */
+.lt-input{
+  width:52px;
+  text-align:center;
+  font-size:.88rem;
+  font-weight:700;
+  padding:5px 4px;
+  border:1.5px solid var(--bd);
+  border-radius:7px;
+  background:var(--s);
+  color:var(--ink);
+  -webkit-appearance:none;
+}
+.lt-input:focus{
+  outline:none;
+  border-color:var(--am);
+  box-shadow:0 0 0 3px rgba(184,96,10,.1);
+}
+.lt-input.cf-input{
+  border-color:#b0c8f0;
+  background:var(--blb);
+  color:var(--bl);
+}
+.lt-input.cf-input:focus{
+  border-color:var(--bl);
+  box-shadow:0 0 0 3px rgba(26,78,136,.1);
+}
+
+/* Total cell */
+.lt-total{font-weight:700;font-size:.9rem;color:var(--ink);}
+.lt-stockout{color:var(--re);font-size:.65rem;font-weight:700;}
+
+/* Delete button */
+.lt-del{
+  background:none;border:none;color:var(--mu);
+  cursor:pointer;font-size:.85rem;padding:4px 6px;
+  border-radius:6px;-webkit-tap-highlight-color:transparent;
+  line-height:1;
+}
+.lt-del:active{background:var(--reb);color:var(--re);}
+
+/* Totals footer row */
+.log-table tfoot td{
+  padding:8px 10px;
+  background:var(--s2);
+  font-weight:700;
+  font-size:.82rem;
+  border-top:2px solid var(--bd);
+}
+.lt-foot-label{font-size:.68rem;font-weight:700;color:var(--mu);text-transform:uppercase;}
 
 </style>
 </head>
@@ -508,32 +729,52 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
   <div class="card">
     <div class="ct">📋 Daily Log</div>
 
-    <!-- Date + Add-item row — mobile stacked -->
-    <div class="log-form-row">
-      <div class="fi" style="max-width:100%;">
-        <label class="fl">Date</label>
-        <input type="date" id="logDate" onchange="onDateChange()">
-      </div>
-      <div class="fi" style="max-width:100%;">
-        <label class="fl">Add Item</label>
-        <select id="itemPicker">
-          <option value="">— select item —</option>
-        </select>
-      </div>
-      <div class="log-form-btns">
-        <button class="btn bto" onclick="addLogRow()">+ Add Item</button>
-        <button class="btn btg" onclick="openModal()">+ New Item</button>
-      </div>
+    <!-- Date -->
+    <div style="margin-bottom:14px;">
+      <label class="fl">Date</label>
+      <input type="date" id="logDate" onchange="onDateChange()" style="width:100%;">
     </div>
 
-    <!-- Log entries list -->
-    <div id="logEntries"></div>
+    <!-- Add item row: select + made + sold + button -->
+    <div class="log-add-row">
+      <div class="log-add-select">
+        <label class="fl">Item</label>
+        <select id="itemPicker">
+          <option value="">— select —</option>
+        </select>
+      </div>
+      <div class="log-add-qty">
+        <label class="fl">Made</label>
+        <input type="number" id="addMade" inputmode="numeric" min="0" value="0" placeholder="0">
+      </div>
+      <div class="log-add-qty">
+        <label class="fl">Sold</label>
+        <input type="number" id="addSold" inputmode="numeric" min="0" value="0" placeholder="0">
+      </div>
+      <button class="btn" id="addBtn" onclick="addLogRow()" style="margin-top:auto;">+ Add</button>
+    </div>
 
-    <!-- Carry-forward info banner -->
-    <div id="cfBanner" style="display:none;background:var(--blb);border:1px solid #b0c8f0;border-radius:9px;padding:10px 14px;margin-bottom:12px;font-size:.76rem;color:var(--bl);line-height:1.6;"></div>
+    <!-- Entries table -->
+    <div id="logTableWrap" style="display:none;margin-top:14px;overflow-x:auto;-webkit-overflow-scrolling:touch;">
+      <table class="log-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Made</th>
+            <th>Carry Fwd</th>
+            <th>Total</th>
+            <th>Sold</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="logTableBody"></tbody>
+        <tfoot id="logTableFoot"></tfoot>
+      </table>
+    </div>
 
-    <!-- Footer: live revenue + save -->
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:12px;border-top:1px solid var(--bd);flex-wrap:wrap;gap:8px;">
+    <!-- Footer -->
+    <div style="display:flex;justify-content:space-between;align-items:center;
+      margin-top:14px;padding-top:12px;border-top:1px solid var(--bd);flex-wrap:wrap;gap:8px;">
       <div>
         <div id="live-rev" style="font-size:.88rem;font-weight:700;color:var(--gr)"></div>
         <div id="live-summary" style="font-size:.72rem;color:var(--mu);margin-top:2px;"></div>
@@ -554,14 +795,15 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
     <div class="card">
       <div class="ct">📊 Per-Item Intelligence</div>
       <div class="search-bar"><input type="text" id="intelSearch" placeholder="Search items..." oninput="renderIntelTable()"></div>
-      <div class="tw"><table>
+      <div class="intel-desktop-table"><div class="tw"><table>
         <thead><tr>
           <th>Item</th><th>Type</th><th>Days</th><th>Avg Sold/Day</th>
           <th>Sell Rate</th><th>Stockout%</th><th>Demand Est.</th>
           <th>Trend</th><th>Velocity Trend</th><th>Confidence</th><th>Signal</th>
         </tr></thead>
         <tbody id="intelBody"></tbody>
-      </table></div>
+      </table></div></div>
+      <div class="intel-mobile-cards" id="intelMobileCards"></div>
     </div>
     <div class="two">
       <div class="card"><div class="ct">🏆 Best Sellers</div><div id="ch-best"></div></div>
@@ -609,6 +851,7 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
         </tr></thead>
         <tbody id="planMakeBody"></tbody>
       </table></div>
+      <div class="plan-mobile-view" id="planMakeMobile"></div>
     </div>
     <!-- SKIP TODAY -->
     <div class="card" id="plan-skip-card" style="display:none;">
@@ -620,6 +863,7 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
         </tr></thead>
         <tbody id="planSkipBody"></tbody>
       </table></div>
+      <div class="plan-mobile-view" id="planSkipMobile"></div>
     </div>
     <!-- FLAGGED -->
     <div class="card" id="plan-flag-card" style="display:none;">
@@ -637,11 +881,11 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
   <div class="card">
     <div class="ct">📆 Weekly Production Plan</div>
     <p class="cs">Full Mon–Sun grid. Each cell shows recommended production for that item on that day. Multi-day items show a weekly batch recommendation.</p>
-    <div class="fr">
-      <div class="fi" style="max-width:180px;"><label class="fl">Safety Buffer</label>
+    <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:flex-end;">
+      <div class="fi"><label class="fl">Safety Buffer</label>
         <select id="wb"><option value="10">10%</option><option value="20" selected>20%</option><option value="30">30%</option></select>
       </div>
-      <button class="btn" onclick="genWeekly()" style="margin-top:auto;">Generate Weekly Plan</button>
+      <button class="btn" onclick="genWeekly()">Generate</button>
     </div>
   </div>
   <div id="we" class="empty"><div class="ico">📆</div><p>Click Generate Weekly Plan.<br>Needs 5+ days of data.</p></div>
@@ -668,10 +912,10 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
   <div class="card">
     <div class="ct">💾 Backup & Restore</div>
     <p class="cs">Export data regularly. Import on any computer to restore.</p>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="btn" onclick="exportData()">⬇ Export JSON</button>
-      <label class="btn bto" style="cursor:pointer;">⬆ Import JSON<input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>
-      <button class="btn btg" onclick="loadSample()" title="Reload the 30-day demo data">🔄 Load Sample Data</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <button class="btn" onclick="exportData()">⬇ Export</button>
+      <label class="btn bto" style="cursor:pointer;text-align:center;">⬆ Import<input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>
+      <button class="btn btg" onclick="loadSample()">🔄 Sample Data</button>
       <button class="btn btg" style="color:var(--re);border-color:#e0b0b0;" onclick="clearAll()">🗑 Clear All</button>
     </div>
   </div>
@@ -680,7 +924,7 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
 
 <!-- ══════ PAGE: REVENUE ══════ -->
 <div class="page" id="page-revenue">
-  <div class="sr" id="rev-stats-row">
+  <div class="sr" id="rev-stats-row" style="grid-template-columns:repeat(5,1fr);">
     <div class="st"><div class="sn" id="rv1">₹0</div><div class="sl">Total Revenue</div></div>
     <div class="st"><div class="sn" id="rv2">₹0</div><div class="sl">Avg/Day</div></div>
     <div class="st"><div class="sn" id="rv3">₹0</div><div class="sl">Best Day</div></div>
@@ -755,10 +999,11 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
     <div class="ct">🗂 Item Catalog</div>
     <p class="cs">All items ever tracked. Deactivate items you're not currently making — history is kept for when you bring them back.</p>
     <button class="btn" onclick="openModal()" style="margin-bottom:12px;">+ Add New Item</button>
-    <div class="tw"><table>
+    <div class="catalog-desktop"><div class="tw"><table>
       <thead><tr><th>Item</th><th>Type</th><th>Shelf Days</th><th>Price (₹)</th><th>Status</th><th>Days</th><th>Sold</th><th>Revenue</th><th>Avg/Day</th><th>Trend</th><th>Actions</th></tr></thead>
       <tbody id="catBody"></tbody>
-    </table></div>
+    </table></div></div>
+    <div class="catalog-mobile" id="catMobile"></div>
   </div>
 </div>
 
@@ -988,80 +1233,93 @@ function autoAddCarryForwards(){
     if(F[c.id]) return; // already in form
     const cf = getCarryForward(c.id, dateStr);
     if(cf > 0){
-      F[c.id] = {made:0, sold:0};
-      renderEntry(c.id);
+      F[c.id] = {made:0, sold:0, cf};
+      renderTableRow(c.id);
     }
   });
+  if(Object.keys(F).length){
+    document.getElementById('logTableWrap').style.display='block';
+  }
   buildItemPicker();
   updateCFBanner();
   updateLiveSummary();
 }
 
 function addLogRow(){
-  const sel = document.getElementById('itemPicker');
-  const id = sel.value;
+  const sel   = document.getElementById('itemPicker');
+  const id    = sel.value;
+  const made  = Math.max(0, +(document.getElementById('addMade').value)||0);
+  const sold  = Math.max(0, +(document.getElementById('addSold').value)||0);
   if(!id){ toast('Select an item first'); return; }
-  if(F[id]){ toast('Already added'); return; }
-  F[id] = {made:0, sold:0};
-  renderEntry(id);
+  if(F[id]){ toast('Already in table'); return; }
+  const dateStr = document.getElementById('logDate').value;
+  const cf = getCarryForward(id, dateStr);
+  F[id] = {made, sold, cf};   // store cf too so user can edit it
+  renderTableRow(id);
   buildItemPicker();
-  updateCFBanner();
   updateLiveSummary();
+  updateTableFooter();
+  // Reset inputs
+  sel.value = '';
+  document.getElementById('addMade').value = 0;
+  document.getElementById('addSold').value = 0;
+  document.getElementById('logTableWrap').style.display = 'block';
+  // Focus back to picker for next item
+  sel.focus();
 }
 
 function renderEntry(itemId){
-  // Build or rebuild a single entry row
   const c = cat(itemId);
   if(!c) return;
   const dateStr = document.getElementById('logDate').value;
   const cf = getCarryForward(itemId, dateStr);
   const e = F[itemId];
+  const container = document.getElementById('logEntries');
+  const existing = document.getElementById('le-'+itemId);
+  const hasCF = cf > 0;
+  const typeTag = `<span class="${c.type==='fresh'?'tf':c.type==='multi'?'tm2':'tr2'}">${c.type==='fresh'?'Fresh':c.type==='multi'?'Multi':'Rotate'}</span>`;
+  const priceTag = c.price ? `<span style="font-size:.65rem;color:var(--mu);">₹${c.price}</span>` : '';
+  const cfTag = hasCF ? `<span class="le-cf-tag">+${cf} carry</span>` : '';
+
+  // Compute result
   const available = cf + (e.made||0);
   const leftover = Math.max(0, available - (e.sold||0));
   const stockout = available > 0 && (e.sold||0) >= available;
   const srPct = available > 0 ? Math.round((e.sold||0)/available*100) : null;
   const rev = c.price && e.sold ? c.price * e.sold : 0;
   const lftCol = leftover > 8 ? 'var(--re)' : leftover > 2 ? 'var(--am)' : 'var(--gr)';
-
-  const container = document.getElementById('logEntries');
-  let existing = document.getElementById('le-'+itemId);
-
-  const hasCF = cf > 0;
-  const typeTag = `<span class="${c.type==='fresh'?'tf':c.type==='multi'?'tm2':'tr2'}">${c.type==='fresh'?'Fresh':c.type==='multi'?'Multi':'Rotate'}</span>`;
-  const cfTag = hasCF ? `<span class="le-cf">+${cf} carry</span>` : '';
-  const priceTag = c.price ? `<span style="font-size:.65rem;color:var(--mu);">₹${c.price}/unit</span>` : '';
-  const soTag = stockout ? `<span class="le-stockout">Sold Out</span>` : '';
-
   const resultHtml = available > 0
-    ? `<span style="color:${lftCol};font-weight:700">${leftover} left</span>${srPct!==null?` <span class="p ${srPct>=80?'pg':srPct>=55?'pa':'pr'}">${srPct}%</span>`:''}`
+    ? `<span style="color:${lftCol};font-weight:700">${leftover} left</span> <span class="p ${srPct>=80?'pg':srPct>=55?'pa':'pr'}">${srPct}%</span>`
     : '<span style="color:var(--mu)">—</span>';
-
-  const revHtml = rev > 0 ? `₹${rev.toLocaleString('en-IN',{maximumFractionDigits:0})}` : '';
+  const revHtml = rev > 0 ? `<span class="le-rev-tag">₹${rev.toLocaleString('en-IN',{maximumFractionDigits:0})}</span>` : '';
+  const soHtml = stockout ? `<span class="le-stockout">Sold Out</span>` : '';
 
   const innerHTML = `
-    <div class="le-name-row">
+    <div class="le-header">
       <div class="le-name">${c.name} ${typeTag} ${priceTag}</div>
-      <button class="le-del" onclick="removeEntry('${itemId}')" title="Remove">✕</button>
+      <button class="le-del" onclick="removeEntry('${itemId}')">✕</button>
     </div>
-    <div class="le-fields-row">
-      <div class="le-field">
-        <label>Made Today</label>
-        <input type="number" inputmode="numeric" id="lem-${itemId}" min="0" value="${e.made||0}"
+    <div class="le-inputs">
+      <div class="le-input-group">
+        <div class="le-input-label">Made Today</div>
+        <input class="le-input-field" type="number" inputmode="numeric"
+          id="lem-${itemId}" min="0" value="${e.made||0}"
           onchange="updateEntry('${itemId}','made',+this.value)"
           onblur="updateEntry('${itemId}','made',+this.value)">
       </div>
-      <div class="le-field">
-        <label>Sold Today</label>
-        <input type="number" inputmode="numeric" id="les-${itemId}" min="0" value="${e.sold||0}"
+      <div class="le-input-group">
+        <div class="le-input-label">Sold Today</div>
+        <input class="le-input-field" type="number" inputmode="numeric"
+          id="les-${itemId}" min="0" value="${e.sold||0}"
           onchange="updateEntry('${itemId}','sold',+this.value)"
           onblur="updateEntry('${itemId}','sold',+this.value)">
       </div>
     </div>
-    <div class="le-info">
+    <div class="le-result-row">
       ${cfTag}
       <div class="le-result" id="ler-${itemId}">${resultHtml}</div>
-      <div class="le-rev" id="lerev-${itemId}">${revHtml}</div>
-      ${soTag ? `<div id="leso-${itemId}">${soTag}</div>` : `<div id="leso-${itemId}"></div>`}
+      ${revHtml}
+      <div id="leso-${itemId}">${soHtml}</div>
     </div>`;
 
   if(existing){
@@ -1095,11 +1353,21 @@ function updateEntry(itemId, key, val){
 
   const rEl = document.getElementById('ler-'+itemId);
   if(rEl) rEl.innerHTML = available > 0
-    ? `<span style="color:${lftCol};font-weight:700">${leftover} left</span>${srPct!==null?` <span class="p ${srPct>=80?'pg':srPct>=55?'pa':'pr'}">${srPct}%</span>`:''}`
+    ? `<span style="color:${lftCol};font-weight:700">${leftover} left</span> <span class="p ${srPct>=80?'pg':srPct>=55?'pa':'pr'}">${srPct}%</span>`
     : '<span style="color:var(--mu)">—</span>';
 
-  const revEl = document.getElementById('lerev-'+itemId);
-  if(revEl) revEl.textContent = rev > 0 ? '₹'+rev.toLocaleString('en-IN',{maximumFractionDigits:0}) : '';
+  // update rev inside result row
+  const resultRow = rEl?.closest('.le-result-row');
+  if(resultRow){
+    let revEl = resultRow.querySelector('.le-rev-tag');
+    if(!revEl && rev > 0){
+      revEl = document.createElement('span');
+      revEl.className='le-rev-tag';
+      resultRow.appendChild(revEl);
+    }
+    if(revEl) revEl.textContent = rev > 0 ? '₹'+rev.toLocaleString('en-IN',{maximumFractionDigits:0}) : '';
+    if(revEl && rev===0) revEl.textContent='';
+  }
 
   const soEl = document.getElementById('leso-'+itemId);
   if(soEl) soEl.innerHTML = stockout ? '<span class="le-stockout">Sold Out</span>' : '';
@@ -1107,22 +1375,120 @@ function updateEntry(itemId, key, val){
   updateLiveSummary();
 }
 
+
+function renderTableRow(itemId){
+  const c = cat(itemId); if(!c) return;
+  const e = F[itemId];
+  const cf = e.cf !== undefined ? e.cf : getCarryForward(itemId, document.getElementById('logDate').value);
+  if(e.cf === undefined) e.cf = cf;
+  const total = (e.made||0) + cf;
+  const sold  = e.sold||0;
+  const stockout = total > 0 && sold >= total;
+  const typeLabel = c.type==='fresh'?'Fresh':c.type==='multi'?'Multi':'Rotate';
+  const typeCls   = c.type==='fresh'?'tf':c.type==='multi'?'tm2':'tr2';
+
+  const tbody = document.getElementById('logTableBody');
+  const existing = document.getElementById('ltr-'+itemId);
+
+  const tr = document.createElement('tr');
+  tr.id = 'ltr-'+itemId;
+  tr.innerHTML = `
+    <td>
+      <div class="lt-name">${c.name}</div>
+      <div class="lt-type"><span class="${typeCls}">${typeLabel}</span></div>
+    </td>
+    <td>
+      <input class="lt-input" type="number" inputmode="numeric" min="0"
+        id="ltm-${itemId}" value="${e.made||0}"
+        onchange="updateTableEntry('${itemId}','made',+this.value)"
+        onblur="updateTableEntry('${itemId}','made',+this.value)">
+    </td>
+    <td>
+      <input class="lt-input cf-input" type="number" inputmode="numeric" min="0"
+        id="ltc-${itemId}" value="${cf}"
+        onchange="updateTableEntry('${itemId}','cf',+this.value)"
+        onblur="updateTableEntry('${itemId}','cf',+this.value)"
+        title="Editable — set to 0 if discarded">
+    </td>
+    <td><span class="lt-total" id="ltt-${itemId}">${total}</span></td>
+    <td>
+      <input class="lt-input" type="number" inputmode="numeric" min="0"
+        id="lts-${itemId}" value="${sold}"
+        onchange="updateTableEntry('${itemId}','sold',+this.value)"
+        onblur="updateTableEntry('${itemId}','sold',+this.value)">
+    </td>
+    <td>
+      <button class="lt-del" onclick="removeEntry('${itemId}')">✕</button>
+    </td>`;
+
+  if(existing) existing.replaceWith(tr);
+  else tbody.appendChild(tr);
+}
+
+function updateTableEntry(itemId, key, val){
+  if(!F[itemId]) return;
+  F[itemId][key] = val;
+  const e = F[itemId];
+  const total = (e.made||0) + (e.cf||0);
+  const sold  = e.sold||0;
+  const stockout = total > 0 && sold >= total;
+  // Update total cell
+  const totalEl = document.getElementById('ltt-'+itemId);
+  if(totalEl) totalEl.textContent = total;
+  // Sync F[itemId] cf into carryIn for saving compatibility
+  updateLiveSummary();
+  updateTableFooter();
+}
+
+function updateTableFooter(){
+  const foot = document.getElementById('logTableFoot');
+  if(!foot) return;
+  const ids = Object.keys(F);
+  if(!ids.length){ foot.innerHTML=''; return; }
+  let totalMade=0, totalCf=0, totalQty=0, totalSold=0;
+  ids.forEach(id=>{
+    const e=F[id];
+    totalMade += e.made||0;
+    totalCf   += e.cf||0;
+    totalQty  += (e.made||0)+(e.cf||0);
+    totalSold += e.sold||0;
+  });
+  foot.innerHTML = `<tr>
+    <td><span class="lt-foot-label">${ids.length} item${ids.length>1?'s':''}</span></td>
+    <td><strong>${totalMade}</strong></td>
+    <td><strong>${totalCf}</strong></td>
+    <td><strong>${totalQty}</strong></td>
+    <td><strong>${totalSold}</strong></td>
+    <td></td>
+  </tr>`;
+}
+
 function removeEntry(itemId){
   delete F[itemId];
-  const el = document.getElementById('le-'+itemId);
-  if(el) el.remove();
+  // Remove from table
+  const tr = document.getElementById('ltr-'+itemId);
+  if(tr) tr.remove();
+  // Remove old card if exists
+  const card = document.getElementById('le-'+itemId);
+  if(card) card.remove();
+  // Hide table if empty
+  if(!Object.keys(F).length)
+    document.getElementById('logTableWrap').style.display='none';
   buildItemPicker();
   updateCFBanner();
   updateLiveSummary();
+  updateTableFooter();
 }
 
 function clearLogEntries(){
   F = {};
   document.getElementById('logEntries').innerHTML = '';
+  document.getElementById('logTableBody').innerHTML = '';
+  document.getElementById('logTableFoot').innerHTML = '';
+  document.getElementById('logTableWrap').style.display = 'none';
   buildItemPicker();
   updateCFBanner();
   updateLiveSummary();
-  // Re-add carry-forwards
   autoAddCarryForwards();
 }
 
@@ -1157,7 +1523,7 @@ function updateLiveSummary(){
   let totalSold=0, totalRev=0, totalMade=0;
   Object.keys(F).forEach(id=>{
     const e=F[id]; const c=cat(id);
-    const cf=getCarryForward(id,dateStr);
+    const cf = e.cf !== undefined ? e.cf : getCarryForward(id,dateStr);
     totalMade += (e.made||0)+cf;
     totalSold += e.sold||0;
     if(c&&c.price) totalRev += c.price*(e.sold||0);
@@ -1177,8 +1543,8 @@ function saveDay(){
   const ids = Object.keys(F);
   if(!ids.length){ alert('Add at least one item.'); return; }
   // Build entries with carryIn stored
-  const entries = ids.filter(id=>F[id]&&(F[id].made>0||F[id].sold>0)).map(id=>{
-    const cf = getCarryForward(id, dv);
+  const entries = ids.filter(id=>F[id]&&(F[id].made>0||F[id].sold>0||F[id].cf>0)).map(id=>{
+    const cf = F[id].cf !== undefined ? F[id].cf : getCarryForward(id, dv);
     return {id, made:F[id].made||0, sold:F[id].sold||0, carryIn:cf,
       stockout: (F[id].sold||0) >= (cf+(F[id].made||0)) && (cf+(F[id].made||0))>0};
   });
@@ -1476,6 +1842,7 @@ function renderIntel(){
   const intels=getIntels();
 
   renderIntelTable(intels);
+  renderIntelMobileCards(intels);
   renderIntelCharts(intels);
   renderInsightCards(intels);
 }
@@ -1876,6 +2243,7 @@ function genDaily(){
 
   // ── SUMMARY ──
   const learningCount = makeRows.filter(r=>r.sig.phase==='learning').length;
+  renderPlanMobileCards(makeRows, skipRows);
   document.getElementById('dailyTotals').innerHTML=`
     <div class="ct">📋 Summary</div>
     <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-end;">
@@ -2018,6 +2386,7 @@ function loadSample(){
 
 // ════════════ CATALOG ════════════
 function renderCatalog(){
+  renderCatalogMobile();
   document.getElementById('catBody').innerHTML=S.catalog.map(c=>{
     const allE=S.logs.flatMap(l=>l.entries.filter(e=>e.id===c.id));
     const n=allE.length,ts=allE.reduce((a,e)=>a+e.sold,0);
@@ -2383,6 +2752,121 @@ function renderRevenue(){
 
   document.getElementById('rev-insights').innerHTML=cards.slice(0,8).map(c=>`
     <div class="ic ${c.cls}"><h4>${c.title}</h4><p>${c.text}</p></div>`).join('');
+}
+
+
+// ════════════ MOBILE RENDERERS ════════════
+
+function isMobile(){ return window.innerWidth <= 640; }
+
+// Intel mobile cards — called alongside renderIntelTable
+function renderIntelMobileCards(intels){
+  if(!intels) intels = getIntels();
+  const el = document.getElementById('intelMobileCards');
+  if(!el) return;
+  el.innerHTML = intels.map(d=>{
+    const srColor = d.sellRate>=0.8?'var(--gr)':d.sellRate>=0.6?'var(--am)':'var(--re)';
+    const soColor = d.soRate>0.5?'var(--re)':d.soRate>0.25?'var(--am)':'var(--gr)';
+    const trendEl = d.trend==='up'?'<span class="tu">▲ Growing</span>':
+      d.trend==='down'?'<span class="td2">▼ Declining</span>':'<span class="ts">→ Stable</span>';
+    const typeTag = `<span class="${d.c.type==='fresh'?'tf':d.c.type==='multi'?'tm2':'tr2'}">${d.c.type==='fresh'?'Fresh':d.c.type==='multi'?'Multi':'Rotate'}</span>`;
+    const confBadge = `<span class="cf ${d.conf==='high'?'cfh':d.conf==='med'?'cfm':'cfl'}">${d.conf.toUpperCase()}</span>`;
+    return `<div class="intel-card">
+      <div class="intel-card-name">${d.c.name} ${typeTag} ${confBadge}</div>
+      <div class="intel-card-grid">
+        <div class="intel-card-stat">
+          <div class="intel-card-stat-label">Avg Sold/Day</div>
+          <div class="intel-card-stat-val">${d.avgSold.toFixed(1)}</div>
+        </div>
+        <div class="intel-card-stat">
+          <div class="intel-card-stat-label">Demand Est.</div>
+          <div class="intel-card-stat-val" style="color:var(--am)">${d.demEst.toFixed(1)}</div>
+        </div>
+        <div class="intel-card-stat">
+          <div class="intel-card-stat-label">Sell Rate</div>
+          <div class="intel-card-stat-val" style="color:${srColor}">${Math.round(d.sellRate*100)}%</div>
+        </div>
+        <div class="intel-card-stat">
+          <div class="intel-card-stat-label">Stockout%</div>
+          <div class="intel-card-stat-val" style="color:${soColor}">${Math.round(d.soRate*100)}%</div>
+        </div>
+      </div>
+      <div class="intel-card-signal">${trendEl} &nbsp; ${d.signal}</div>
+    </div>`;
+  }).join('');
+}
+
+// Plan mobile cards — called after genDaily populates table rows
+function renderPlanMobileCards(makeRows, skipRows){
+  const makeEl = document.getElementById('planMakeMobile');
+  const skipEl = document.getElementById('planSkipMobile');
+  if(makeEl && makeRows){
+    makeEl.innerHTML = makeRows.map(({c,sig,isBatch})=>{
+      const recColor = isBatch?'var(--bl)':'var(--gr)';
+      const phaseBadge = sig.phase==='learning'
+        ? `<span class="p p-b" style="font-size:.6rem;">🔬 Day ${sig.daysLogged}/10</span>` : '';
+      return `<div class="plan-card-item">
+        <div class="plan-card-rec" style="color:${recColor}">${sig.rec}<small>units</small></div>
+        <div class="plan-card-info">
+          <div class="plan-card-name">${c.name} ${phaseBadge}</div>
+          <div class="plan-card-signal">${sig.signal||''}</div>
+          <div class="plan-card-reason">${sig.reason||''}</div>
+        </div>
+      </div>`;
+    }).join('') || '<p style="color:var(--mu);font-size:.82rem;padding:8px 0">Nothing to make today</p>';
+  }
+  if(skipEl && skipRows){
+    skipEl.innerHTML = skipRows.map(({c,carry,daysLeft})=>`
+      <div class="skip-card-item">
+        <div>
+          <div class="skip-card-name">${c.name}</div>
+          <div class="skip-card-info">${daysLeft}</div>
+        </div>
+        <div class="skip-card-carry">${carry} left</div>
+      </div>`).join('');
+  }
+}
+
+// Catalog mobile cards
+function renderCatalogMobile(){
+  const el = document.getElementById('catMobile');
+  if(!el) return;
+  el.innerHTML = S.catalog.map(c=>{
+    const allE = S.logs.flatMap(l=>l.entries.filter(e=>e.id===c.id));
+    const n=allE.length, ts=allE.reduce((a,e)=>a+e.sold,0);
+    const avg=n?ts/n:0;
+    const d=intel(c.id);
+    const trendEl=d?d.trend==='up'?'<span class="tu">▲</span>':d.trend==='down'?'<span class="td2">▼</span>':'<span class="ts">→</span>':'—';
+    const typeTag=`<span class="${c.type==='fresh'?'tf':c.type==='multi'?'tm2':'tr2'}">${c.type==='fresh'?'Fresh':c.type==='multi'?'Multi':'Rotate'}</span>`;
+    const rev=(c.price||0)*ts;
+    return `<div class="cat-card">
+      <div class="cat-card-header">
+        <div>
+          <div class="cat-card-name">${c.name}</div>
+          <div class="cat-card-meta">${typeTag}
+            <span class="p ${c.active?'pg':'pr'}" style="font-size:.62rem">${c.active?'Active':'Inactive'}</span>
+            <span style="font-size:.68rem;color:var(--mu)">${c.shelfDays}d shelf</span>
+            ${trendEl}
+          </div>
+        </div>
+        <button class="btn ${c.active?'btg':'bto'}" style="padding:5px 12px;font-size:.7rem;"
+          onclick="toggleActive('${c.id}')">${c.active?'Deactivate':'Activate'}</button>
+      </div>
+      <div class="cat-card-row">
+        <div class="cat-card-stat">Days logged: <strong>${n}</strong></div>
+        <div class="cat-card-stat">Total sold: <strong>${ts}</strong></div>
+        <div class="cat-card-stat">Avg/day: <strong>${n?avg.toFixed(1):'—'}</strong></div>
+        <div class="cat-card-stat">Revenue: <strong style="color:var(--gr)">₹${rev.toLocaleString('en-IN',{maximumFractionDigits:0})}</strong></div>
+      </div>
+      <div class="cat-card-price">
+        <label>Price ₹</label>
+        <input type="number" min="0" step="0.5" value="${c.price||0}"
+          onchange="setPrice('${c.id}',+this.value)"
+          onblur="setPrice('${c.id}',+this.value)">
+        <span style="font-size:.68rem;color:var(--mu)">/unit</span>
+      </div>
+    </div>`;
+  }).join('') || '<p style="color:var(--mu);padding:12px 0;font-size:.85rem;">No items yet. Tap + Add New Item above.</p>';
 }
 
 // ════════════ TOAST ════════════
