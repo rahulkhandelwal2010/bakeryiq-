@@ -2,7 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Chabua Bakery">
+<meta name="theme-color" content="#1c1208">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
 <title>BakeryIQ — Production Intelligence</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap');
@@ -269,9 +276,65 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
   .le-info{align-items:flex-start;grid-column:1/-1;flex-direction:row;gap:10px;flex-wrap:wrap;}
 }
 
+
+/* ── PIN SCREEN ── */
+#pinScreen{position:fixed;inset:0;z-index:10000;background:#1c1208;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:20px;}
+.pin-logo{font-family:Georgia,serif;font-size:2rem;font-weight:700;color:#d4862a;margin-bottom:4px;}
+.pin-sub{font-size:.72rem;color:#7a5530;margin-bottom:32px;letter-spacing:3px;text-transform:uppercase;}
+.pin-label{font-size:.72rem;font-weight:600;color:#9a7a60;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;}
+.pin-dots{display:flex;gap:14px;margin-bottom:8px;}
+.pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid #3a2510;background:transparent;transition:background .15s;}
+.pin-dot.filled{background:#d4862a;border-color:#d4862a;}
+.pin-dot.error{background:#a02828;border-color:#a02828;}
+.pin-error{color:#c04040;font-size:.75rem;font-weight:600;min-height:22px;margin-bottom:16px;text-align:center;}
+.pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:280px;}
+.pin-key{background:#2a1a08;border:none;border-radius:14px;color:#d4862a;
+  font-family:'DM Sans',sans-serif;font-size:1.5rem;font-weight:600;
+  height:64px;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.pin-key:active{background:#3a2810;transform:scale(.94);}
+.pin-key.del{font-size:1rem;color:#9a7a60;}
+.pin-key.empty{background:transparent;pointer-events:none;}
+.pin-change-btn{margin-top:20px;background:none;border:none;color:#5a3a20;
+  font-size:.72rem;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:underline;}
+@keyframes pinShake{0%,100%{transform:none}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.pin-shake{animation:pinShake .3s ease;}
+@supports(padding:env(safe-area-inset-bottom)){
+  .botnav{padding-bottom:env(safe-area-inset-bottom);}
+}
+
 </style>
 </head>
 <body>
+<!-- PIN SCREEN -->
+<div id="pinScreen">
+  <div class="pin-logo">🥐 Chabua Bakery</div>
+  <div class="pin-sub">Enter PIN to continue</div>
+  <div class="pin-label" id="pinLabel">Enter PIN</div>
+  <div class="pin-dots">
+    <div class="pin-dot" id="pd0"></div>
+    <div class="pin-dot" id="pd1"></div>
+    <div class="pin-dot" id="pd2"></div>
+    <div class="pin-dot" id="pd3"></div>
+  </div>
+  <div class="pin-error" id="pinError"></div>
+  <div class="pin-keypad">
+    <button class="pin-key" onclick="pinKey('1')">1</button>
+    <button class="pin-key" onclick="pinKey('2')">2</button>
+    <button class="pin-key" onclick="pinKey('3')">3</button>
+    <button class="pin-key" onclick="pinKey('4')">4</button>
+    <button class="pin-key" onclick="pinKey('5')">5</button>
+    <button class="pin-key" onclick="pinKey('6')">6</button>
+    <button class="pin-key" onclick="pinKey('7')">7</button>
+    <button class="pin-key" onclick="pinKey('8')">8</button>
+    <button class="pin-key" onclick="pinKey('9')">9</button>
+    <button class="pin-key empty"></button>
+    <button class="pin-key" onclick="pinKey('0')">0</button>
+    <button class="pin-key del" onclick="pinDel()">&#9003;</button>
+  </div>
+  <button class="pin-change-btn" onclick="pinStartChange()">Change PIN</button>
+</div>
+
 <div id="loadingOverlay" style="position:fixed;inset:0;background:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:16px;">
   <div style="font-family:'Libre Baskerville',serif;font-size:1.6rem;font-weight:700;color:var(--aml)">🥐 BakeryIQ</div>
   <div style="color:#9a7a60;font-size:.82rem">Loading your data...</div>
@@ -611,6 +674,11 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
 
 <!-- ══════ PAGE: CATALOG ══════ -->
 <div class="page" id="page-catalog">
+  <div class="card" style="background:#2a1a08;border-color:#3a2510;">
+    <div class="ct" style="color:#d4862a;">🔒 PIN Lock</div>
+    <p class="cs" style="color:#9a7a60;">Default PIN is <strong style="color:#d4862a">1234</strong> — change it to keep data private.</p>
+    <button class="btn" onclick="showChangePinScreen()">Change PIN</button>
+  </div>
   <div class="card">
     <div class="ct">🗂 Item Catalog</div>
     <p class="cs">All items ever tracked. Deactivate items you're not currently making — history is kept for when you bring them back.</p>
@@ -2243,10 +2311,91 @@ function renderRevenue(){
     <div class="ic ${c.cls}"><h4>${c.title}</h4><p>${c.text}</p></div>`).join('');
 }
 
-// ════════════ TOAST + INIT ════════════
+// ════════════ TOAST ════════════
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',2200);}
 
-(async()=>{
+// ════════════ PIN LOCK ════════════
+const PIN_KEY='chabua_pin';
+const PIN_SESSION='chabua_unlocked';
+let _pin='', _pinSetting=false, _pinFirst='';
+
+function getPin(){return localStorage.getItem(PIN_KEY)||'1234';}
+function setPin(p){localStorage.setItem(PIN_KEY,p);}
+
+function pinKey(d){
+  if(_pin.length>=4) return;
+  _pin+=d; _pinDots();
+  if(_pin.length===4) setTimeout(()=>_pinSetting?_pinConfirm():_pinCheck(),120);
+}
+function pinDel(){
+  _pin=_pin.slice(0,-1); _pinDots();
+  document.getElementById('pinError').textContent='';
+}
+function _pinDots(){
+  for(let i=0;i<4;i++){
+    const d=document.getElementById('pd'+i);
+    d.classList.toggle('filled',i<_pin.length);
+    d.classList.remove('error');
+  }
+}
+function _pinError(msg){
+  for(let i=0;i<4;i++) document.getElementById('pd'+i).classList.add('error');
+  const e=document.getElementById('pinError');
+  e.textContent=msg;
+  e.classList.remove('pin-shake');
+  void e.offsetWidth;
+  e.classList.add('pin-shake');
+  setTimeout(()=>{_pin='';_pinDots();},700);
+}
+function _pinCheck(){
+  if(_pin===getPin()){
+    sessionStorage.setItem(PIN_SESSION,'1');
+    document.getElementById('pinScreen').style.display='none';
+    startApp();
+  } else {
+    _pinError('Wrong PIN. Try again.');
+  }
+}
+function _pinConfirm(){
+  if(!_pinFirst){
+    _pinFirst=_pin; _pin=''; _pinDots();
+    document.getElementById('pinLabel').textContent='Confirm new PIN';
+  } else {
+    if(_pin===_pinFirst){
+      setPin(_pin);
+      _pinSetting=false; _pinFirst=''; _pin='';
+      document.getElementById('pinLabel').textContent='Enter PIN';
+      document.getElementById('pinScreen').style.display='none';
+      toast('PIN changed ✓');
+    } else {
+      _pinFirst='';
+      _pinError("PINs don't match. Try again.");
+      document.getElementById('pinLabel').textContent='Set new PIN';
+    }
+  }
+}
+function pinStartChange(){
+  _pinSetting=true; _pin=''; _pinFirst='';
+  document.getElementById('pinLabel').textContent='Set new PIN';
+  document.getElementById('pinError').textContent='';
+  _pinDots();
+}
+function showChangePinScreen(){
+  pinStartChange();
+  document.getElementById('pinScreen').style.display='flex';
+}
+
+// ════════════ SERVICE WORKER ════════════
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+
+// ════════════ INIT ════════════
+async function startApp(){
+  const ov=document.getElementById('loadingOverlay');
+  if(ov) ov.style.display='flex';
   try{updateNav();}catch(e){}
   await load();
   initLogDate();
@@ -2254,9 +2403,15 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
   autoAddCarryForwards();
   renderStats();
   updateNav();
-  // Hide loading overlay
-  const ov=document.getElementById('loadingOverlay');
   if(ov) ov.style.display='none';
+}
+
+(()=>{
+  if(sessionStorage.getItem(PIN_SESSION)==='1'){
+    document.getElementById('pinScreen').style.display='none';
+    startApp();
+  }
+  // else PIN screen stays visible, startApp called after correct PIN
 })();
 </script>
 </body>
