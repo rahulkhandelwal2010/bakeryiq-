@@ -138,15 +138,6 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
 .ic.info h4{color:var(--bl);}
 
 /* WEEKLY GRID */
-.wg{display:grid;gap:1px;background:var(--bd);border-radius:10px;overflow:hidden;}
-.wgh{background:var(--s3);font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mu);padding:7px 6px;}
-.wgi{background:var(--s2);font-weight:700;font-size:.73rem;padding:7px 6px;color:var(--ink);}
-.wgc{background:var(--s);padding:7px 5px;text-align:center;}
-.wgq{font-family:'Libre Baskerville',serif;font-size:.95rem;font-weight:700;text-align:center;}
-.wgz{color:var(--mu);font-size:.75rem;text-align:center;}
-.wgpk{background:#fff9ee;}
-.wgt{background:var(--ink);padding:7px 6px;text-align:center;}
-.wgtn{font-family:'Libre Baskerville',serif;font-size:.95rem;font-weight:700;color:var(--aml);}
 
 /* MODAL */
 .mb{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:none;align-items:flex-end;justify-content:center;padding:0;}
@@ -285,8 +276,6 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
   #rev-monthly-chart > div{min-width:44px;}
 
   /* ── Weekly plan grid ── */
-  .wg{font-size:.7rem;}
-  .wgc{padding:4px 2px;}
 
   /* ── Toast ── */
   #toast{bottom:76px;left:50%;transform:translateX(-50%);
@@ -687,7 +676,6 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
   <div class="tab active" onclick="gT('log',this)">📋 Log</div>
   <div class="tab" onclick="gT('intel',this)">🧠 Intelligence</div>
   <div class="tab" onclick="gT('daily',this)">🎯 Daily Plan</div>
-  <div class="tab" onclick="gT('weekly',this)">📆 Weekly Plan</div>
   <div class="tab" onclick="gT('history',this)">📅 History</div>
   <div class="tab" onclick="gT('revenue',this)">💰 Revenue</div>
   <div class="tab" onclick="gT('catalog',this)">🗂 Catalog</div>
@@ -974,27 +962,6 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
     </div>
     <!-- SUMMARY -->
     <div class="card" id="dailyTotals"></div>
-  </div>
-</div>
-
-<!-- ══════ PAGE: WEEKLY PLAN ══════ -->
-<div class="page" id="page-weekly">
-  <div class="card">
-    <div class="ct">📆 Weekly Production Plan</div>
-    <p class="cs">Full Mon–Sun grid. Each cell shows recommended production for that item on that day. Multi-day items show a weekly batch recommendation.</p>
-    <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:flex-end;">
-      <div class="fi"><label class="fl">Safety Buffer</label>
-        <select id="wb"><option value="10">10%</option><option value="20" selected>20%</option><option value="30">30%</option></select>
-      </div>
-      <button class="btn" onclick="genWeekly()">Generate</button>
-    </div>
-  </div>
-  <div id="we" class="empty"><div class="ico">📆</div><p>Click Generate Weekly Plan.<br>Needs 5+ days of data.</p></div>
-  <div id="wb2" style="display:none;">
-    <div class="card">
-      <div class="tw"><div id="weekGrid"></div></div>
-    </div>
-    <div class="card" id="wkNotes"></div>
   </div>
 </div>
 
@@ -2533,75 +2500,6 @@ function genDaily(){
 }
 
 // ════════════ WEEKLY PLAN ════════════
-function genWeekly(){
-  const buf=+document.getElementById('wb').value/100;
-  if(S.logs.length<3){document.getElementById('we').style.display='block';document.getElementById('wb2').style.display='none';return;}
-  document.getElementById('we').style.display='none';
-  document.getElementById('wb2').style.display='block';
-
-  const intels=getIntels();
-
-  // Build plan: itemId -> [qty per dow 0..6]
-  const plan={};
-  intels.forEach(d=>{
-    plan[d.itemId]=DAYS.map((_,dow)=>{
-      if(d.c.shelfDays>=3){
-        // Place batch on Monday (dow=1); show 0 other days
-        if(dow===1){
-          const vel=d.velocity||d.demEst;
-          return Math.ceil(vel*d.c.shelfDays*(d.trend==='up'?1.1:d.trend==='down'?0.92:1)*(1+buf));
-        }
-        return 0;
-      }
-      const dd=dowDemand(d.itemId,dow);
-      const base=dd||d.demEst;
-      const tAdj=d.trend==='up'?1.10:d.trend==='down'?0.92:1;
-      return Math.ceil(base*(1+d.soPressure)*tAdj*(1+buf));
-    });
-  });
-
-  // Render grid: columns = Item + 7 days
-  const cols=1+7;
-  let html=`<div class="wg" style="grid-template-columns:150px repeat(7,1fr);">`;
-  html+=`<div class="wgh">Item</div>`;
-  DAYS.forEach(d=>{html+=`<div class="wgh" style="text-align:center">${d}</div>`;});
-
-  const dayTotals=Array(7).fill(0);
-  intels.forEach(d=>{
-    const qtys=plan[d.itemId]||Array(7).fill(0);
-    const maxQ=Math.max(...qtys.filter(q=>q>0),0);
-    html+=`<div class="wgi">${d.c.name}<br><span class="${d.c.shelfDays>=3?'tm2':'tf'}" style="font-size:.58rem">${d.c.shelfDays}d</span></div>`;
-    qtys.forEach((q,i)=>{
-      dayTotals[i]+=q;
-      const isPeak=q>0&&q===maxQ&&d.c.shelfDays<3;
-      const color=d.c.shelfDays>=3?'var(--bl)':isPeak?'var(--am)':'var(--gr)';
-      html+=`<div class="wgc ${isPeak?'wgpk':''}">${q>0?`<div class="wgq" style="color:${color}">${q}</div>`:`<div class="wgz">—</div>`}</div>`;
-    });
-  });
-
-  // Totals row
-  html+=`<div class="wgt" style="text-align:left;font-size:.66rem;font-weight:700;color:var(--aml);text-transform:uppercase;letter-spacing:.5px;">DAILY TOTAL</div>`;
-  dayTotals.forEach(t=>{html+=`<div class="wgt"><div class="wgtn">${t}</div></div>`;});
-  html+='</div>';
-  document.getElementById('weekGrid').innerHTML=html;
-
-  const pk=dayTotals.indexOf(Math.max(...dayTotals));
-  const lw=dayTotals.indexOf(Math.min(...dayTotals.filter(t=>t>0)));
-  document.getElementById('wkNotes').innerHTML=`
-    <div class="ct">📋 Weekly Summary</div>
-    <div style="display:flex;gap:20px;flex-wrap:wrap;">
-      <div><div class="big-n" style="color:var(--gr)">${dayTotals.reduce((a,b)=>a+b,0)}</div><div class="mu2">Total items this week</div></div>
-      <div><div class="big-n" style="color:var(--re)">${DAYSF[pk]}</div><div class="mu2">Busiest day (${dayTotals[pk]} items)</div></div>
-      <div><div class="big-n" style="color:var(--gr)">${DAYSF[lw]}</div><div class="mu2">Lightest day (${dayTotals[lw]} items)</div></div>
-    </div>
-    <p class="mu2" style="margin-top:12px;line-height:1.7;">
-      <span style="color:var(--gr);font-weight:700">■ Green</span> = daily fresh quantity for that day.
-      <span style="color:var(--bl);font-weight:700">■ Blue (Monday)</span> = multi-day batch to cover the week (place on Monday; carries through shelf life).
-      <span style="color:var(--am);font-weight:700">■ Amber</span> = peak demand day for that item.
-      Days without enough historical data use your overall average as a fallback.
-    </p>`;
-}
-
 // ════════════ HISTORY ════════════
 function renderHistory(){
   const L=S.logs;
