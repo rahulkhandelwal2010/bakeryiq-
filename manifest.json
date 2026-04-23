@@ -2,7 +2,8 @@
   "name": "BakeryIQ",
   "short_name": "BakeryIQ",
   "description": "Smart Production Intelligence for your Bakery",
-  "start_url": "/",
+  "start_url": "/bakeryiq-/",
+  "scope": "/bakeryiq-/",
   "display": "standalone",
   "background_color": "#1c1208",
   "theme_color": "#1c1208",
@@ -15,6 +16,9 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["business", "productivity"],
+  "categories": [
+    "business",
+    "productivity"
+  ],
   "lang": "en"
 }
