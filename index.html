@@ -1143,9 +1143,14 @@ function saveItem(){
   const raw=document.getElementById('mn').value.trim();
   if(!raw){alert('Enter item name.');return;}
   const n=escapeHtml(raw);
+  // Check for duplicate name (case-insensitive)
+  const duplicate=S.catalog.find(c=>c.name.toLowerCase()===n.toLowerCase());
+  if(duplicate){
+    alert('"'+n+'" already exists in your catalog.'+(duplicate.active?'':' (currently inactive)'));
+    return;
+  }
   const sd=+document.getElementById('ms').value||1;
   const price=+document.getElementById('mprice').value||0;
-  // type kept as 'item' for backward compatibility — logic uses shelfDays only
   S.catalog.push({id:'i'+Date.now(),name:n,type:'item',shelfDays:sd,price,active:true});
   save();closeModal();buildItemPicker();renderCatalog();toast('Item added ✓');
 }
