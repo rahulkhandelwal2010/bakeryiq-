@@ -1,23 +1,41 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- Background -->
-  <rect width="512" height="512" rx="80" fill="#1c1208"/>
-  <!-- Croissant shape -->
-  <g transform="translate(256,220)">
-    <!-- Main croissant body -->
-    <ellipse cx="0" cy="0" rx="140" ry="65" fill="#d4862a" transform="rotate(-20)"/>
-    <!-- Left horn -->
-    <ellipse cx="-110" cy="30" rx="55" ry="28" fill="#b8600a" transform="rotate(35,-110,30)"/>
-    <!-- Right horn -->
-    <ellipse cx="110" cy="30" rx="55" ry="28" fill="#b8600a" transform="rotate(-35,110,30)"/>
-    <!-- Highlight -->
-    <ellipse cx="20" cy="-10" rx="80" ry="32" fill="#e8a055" opacity="0.5" transform="rotate(-20)"/>
-  </g>
-  <!-- Text: IQ -->
-  <text x="256" y="390" font-family="Georgia,serif" font-size="80" font-weight="bold"
-    fill="#d4862a" text-anchor="middle" letter-spacing="4">IQ</text>
-  <!-- Small dots for decoration -->
-  <circle cx="160" cy="160" r="8" fill="#b8600a" opacity="0.4"/>
-  <circle cx="352" cy="160" r="8" fill="#b8600a" opacity="0.4"/>
-  <circle cx="120" cy="340" r="6" fill="#b8600a" opacity="0.3"/>
-  <circle cx="392" cy="340" r="6" fill="#b8600a" opacity="0.3"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 340">
+<circle cx="170" cy="170" r="168" fill="#1c1208"/>
+<circle cx="170" cy="170" r="164" fill="none" stroke="#c8801a" stroke-width="2"/>
+<circle cx="170" cy="170" r="152" fill="none" stroke="#c8801a" stroke-width="0.5" stroke-dasharray="5 4"/>
+<line x1="52" y1="282" x2="75" y2="124" stroke="#b87820" stroke-width="1.8" stroke-linecap="round"/>
+<ellipse cx="65" cy="138" rx="6" ry="12" fill="#c88828" transform="rotate(-12,65,138)"/>
+<ellipse cx="57" cy="158" rx="5" ry="10" fill="#b87820" transform="rotate(14,57,158)"/>
+<ellipse cx="67" cy="156" rx="5" ry="10" fill="#c88828" transform="rotate(-14,67,156)"/>
+<ellipse cx="55" cy="176" rx="5" ry="9" fill="#b87820" transform="rotate(12,55,176)"/>
+<ellipse cx="65" cy="178" rx="5" ry="9" fill="#c88828" transform="rotate(-12,65,178)"/>
+<ellipse cx="54" cy="196" rx="4" ry="8" fill="#b87820" transform="rotate(10,54,196)"/>
+<ellipse cx="63" cy="198" rx="4" ry="8" fill="#c88828" transform="rotate(-10,63,198)"/>
+<line x1="288" y1="282" x2="265" y2="124" stroke="#b87820" stroke-width="1.8" stroke-linecap="round"/>
+<ellipse cx="275" cy="138" rx="6" ry="12" fill="#c88828" transform="rotate(12,275,138)"/>
+<ellipse cx="283" cy="158" rx="5" ry="10" fill="#b87820" transform="rotate(-14,283,158)"/>
+<ellipse cx="273" cy="156" rx="5" ry="10" fill="#c88828" transform="rotate(14,273,156)"/>
+<ellipse cx="285" cy="176" rx="5" ry="9" fill="#b87820" transform="rotate(-12,285,176)"/>
+<ellipse cx="275" cy="178" rx="5" ry="9" fill="#c88828" transform="rotate(12,275,178)"/>
+<ellipse cx="286" cy="196" rx="4" ry="8" fill="#b87820" transform="rotate(-10,286,196)"/>
+<ellipse cx="277" cy="198" rx="4" ry="8" fill="#c88828" transform="rotate(10,277,198)"/>
+<ellipse cx="171" cy="234" rx="74" ry="9" fill="#0a0602" opacity="0.6"/>
+<rect x="100" y="206" width="140" height="26" rx="12" fill="#7a3808"/>
+<path d="M 100 208 Q 98 142 170 126 Q 242 142 240 208 Q 210 224 170 226 Q 130 224 100 208 Z" fill="#c8641a"/>
+<path d="M 100 208 Q 98 160 120 136 Q 132 158 130 208 Z" fill="#a84e10" opacity="0.4"/>
+<path d="M 240 208 Q 242 160 220 136 Q 208 158 210 208 Z" fill="#a84e10" opacity="0.4"/>
+<path d="M 140 132 Q 170 124 200 132 Q 180 128 170 127 Q 160 128 140 132 Z" fill="#f0b840" opacity="0.45"/>
+<line x1="138" y1="162" x2="202" y2="162" stroke="#7a3808" stroke-width="3" stroke-linecap="round"/>
+<line x1="142" y1="178" x2="198" y2="178" stroke="#7a3808" stroke-width="3" stroke-linecap="round"/>
+<line x1="148" y1="192" x2="192" y2="192" stroke="#7a3808" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="138" y1="160" x2="202" y2="160" stroke="#e8a040" stroke-width="1" stroke-linecap="round" opacity="0.4"/>
+<line x1="142" y1="176" x2="198" y2="176" stroke="#e8a040" stroke-width="1" stroke-linecap="round" opacity="0.35"/>
+<path d="M 154 120 Q 158 110 154 100" fill="none" stroke="#d4b890" stroke-width="1.5" stroke-linecap="round" opacity="0.35"/>
+<path d="M 170 123 Q 174 112 170 102" fill="none" stroke="#d4b890" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
+<path d="M 186 120 Q 190 110 186 100" fill="none" stroke="#d4b890" stroke-width="1.5" stroke-linecap="round" opacity="0.35"/>
+<line x1="44" y1="264" x2="296" y2="264" stroke="#c8801a" stroke-width="0.8"/>
+<text x="170" y="293" font-family="Georgia,serif" font-size="30" font-weight="700" fill="#f0c060" text-anchor="middle" letter-spacing="5">CHABUA</text>
+<text x="170" y="317" font-family="Georgia,serif" font-size="13" font-weight="400" fill="#d4a040" text-anchor="middle" letter-spacing="10">BAKERY</text>
+<circle cx="148" cy="329" r="2" fill="#c8801a"/>
+<circle cx="170" cy="329" r="2" fill="#c8801a"/>
+<circle cx="192" cy="329" r="2" fill="#c8801a"/>
 </svg>
