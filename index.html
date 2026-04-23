@@ -595,6 +595,47 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
 }
 .lt-foot-label{font-size:.68rem;font-weight:700;color:var(--mu);text-transform:uppercase;}
 
+
+/* ── Calendar Modal ── */
+.cal-wd{
+  text-align:center;font-size:.62rem;font-weight:700;
+  color:var(--mu);text-transform:uppercase;letter-spacing:.5px;
+  padding:6px 0;
+}
+.cal-day{
+  aspect-ratio:1;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border-radius:8px;font-size:.82rem;font-weight:600;
+  cursor:pointer;transition:transform .1s;
+  -webkit-tap-highlight-color:transparent;
+  border:1.5px solid transparent;
+  min-height:38px;
+  padding:2px;
+}
+.cal-day:active{transform:scale(.92);}
+.cal-day.logged{background:#246038;color:#fff;}
+.cal-day.logged:active{background:#1a4e2a;}
+.cal-day.missed{background:#fdf0ee;color:var(--re);border-color:#e8b0b0;}
+.cal-day.today{border:2px solid var(--am);}
+.cal-day.future{background:var(--s2);color:var(--mu);cursor:default;}
+.cal-day.future:active{transform:none;}
+.cal-day.empty{background:transparent;pointer-events:none;}
+.cal-day-num{font-size:.82rem;line-height:1;}
+.cal-day-sales{font-size:.55rem;opacity:.8;margin-top:1px;line-height:1;}
+.cal-dot{
+  display:inline-block;width:10px;height:10px;border-radius:50%;
+  vertical-align:middle;margin-right:3px;
+}
+.cal-dot.cal-logged{background:#246038;}
+.cal-dot.cal-missed{background:#fdf0ee;border:1px solid #e8b0b0;}
+.cal-dot.cal-today{border:2px solid var(--am);background:#fff;}
+.cal-dot.cal-future{background:var(--s2);border:1px solid var(--bd);}
+@media(max-width:480px){
+  #calendarModal .mo{margin:12px;padding:16px;}
+  .cal-day{min-height:42px;font-size:.88rem;}
+  .cal-day-sales{font-size:.52rem;}
+}
+
 </style>
 </head>
 <body>
@@ -670,6 +711,38 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
 
 <div id="toast"></div>
 
+<!-- MODAL: CALENDAR -->
+<div class="mb" id="calendarModal" onclick="if(event.target===this)closeCalendar()">
+  <div class="mo" style="max-width:480px;padding:20px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <button class="btn btg" style="padding:7px 14px;font-size:.85rem;" onclick="calPrev()">◀</button>
+      <div style="text-align:center;">
+        <div id="calTitle" style="font-family:Georgia,serif;font-size:1.1rem;font-weight:700;color:var(--ink);">—</div>
+        <div id="calSummary" style="font-size:.7rem;color:var(--mu);margin-top:2px;">—</div>
+      </div>
+      <button class="btn btg" style="padding:7px 14px;font-size:.85rem;" onclick="calNext()">▶</button>
+    </div>
+    <!-- Weekday header -->
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px;">
+      <div class="cal-wd">Sun</div><div class="cal-wd">Mon</div><div class="cal-wd">Tue</div>
+      <div class="cal-wd">Wed</div><div class="cal-wd">Thu</div><div class="cal-wd">Fri</div>
+      <div class="cal-wd">Sat</div>
+    </div>
+    <!-- Days grid -->
+    <div id="calGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;"></div>
+    <!-- Legend -->
+    <div style="display:flex;justify-content:center;gap:14px;margin-top:14px;font-size:.7rem;color:var(--mu);flex-wrap:wrap;">
+      <span><span class="cal-dot cal-logged"></span> Logged</span>
+      <span><span class="cal-dot cal-missed"></span> Missed</span>
+      <span><span class="cal-dot cal-today"></span> Today</span>
+      <span><span class="cal-dot cal-future"></span> Upcoming</span>
+    </div>
+    <div style="text-align:center;margin-top:14px;">
+      <button class="btn btg" onclick="closeCalendar()" style="padding:8px 24px;">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: ADD ITEM -->
 <div class="mb" id="addModal" onclick="if(event.target===this)closeModal()">
   <div class="mo">
@@ -737,18 +810,21 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
     <div class="st"><div class="sn" id="s5">—</div><div class="sl">SO Rate</div></div>
   </div>
 
-  <!-- Add New Item to Catalog button — full width orange -->
-  <button onclick="openModal()" style="
-    display:block;width:100%;
-    background:var(--am);color:#fff;
-    border:none;border-radius:12px;
-    padding:14px;font-size:.9rem;font-weight:700;
-    font-family:'DM Sans',sans-serif;
-    letter-spacing:.3px;cursor:pointer;
-    margin-bottom:12px;
-    -webkit-tap-highlight-color:transparent;
-    touch-action:manipulation;
-  ">＋ Add New Item to Catalog</button>
+  <!-- Top action buttons -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+    <button onclick="openModal()" style="
+      background:var(--am);color:#fff;border:none;border-radius:12px;
+      padding:14px 10px;font-size:.85rem;font-weight:700;
+      font-family:'DM Sans',sans-serif;letter-spacing:.3px;cursor:pointer;
+      -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+    ">＋ Add New Item</button>
+    <button onclick="openCalendar()" style="
+      background:var(--ink);color:var(--aml);border:1.5px solid var(--aml);border-radius:12px;
+      padding:14px 10px;font-size:.85rem;font-weight:700;
+      font-family:'DM Sans',sans-serif;letter-spacing:.3px;cursor:pointer;
+      -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+    ">📅 View Month Calendar</button>
+  </div>
 
   <div class="card">
     <div class="ct">📋 Daily Log</div>
@@ -3060,6 +3136,107 @@ function renderCatalogMobile(){
       </div>
     </div>`;
   }).join('') || '<p style="color:var(--mu);padding:12px 0;font-size:.85rem;">No items yet. Tap + Add New Item above.</p>';
+}
+
+
+// ════════════ CALENDAR MODAL ════════════
+let _calYear, _calMonth; // 0-indexed month
+
+function openCalendar(){
+  const now = new Date();
+  _calYear = now.getFullYear();
+  _calMonth = now.getMonth();
+  renderCalendar();
+  document.getElementById('calendarModal').style.display = 'flex';
+}
+
+function closeCalendar(){
+  document.getElementById('calendarModal').style.display = 'none';
+}
+
+function calPrev(){
+  _calMonth--;
+  if(_calMonth < 0){ _calMonth = 11; _calYear--; }
+  renderCalendar();
+}
+
+function calNext(){
+  _calMonth++;
+  if(_calMonth > 11){ _calMonth = 0; _calYear++; }
+  renderCalendar();
+}
+
+function renderCalendar(){
+  const monthNames = ['January','February','March','April','May','June',
+                      'July','August','September','October','November','December'];
+  document.getElementById('calTitle').textContent = monthNames[_calMonth] + ' ' + _calYear;
+
+  // First day of month (0-6, Sun-Sat)
+  const firstDay = new Date(_calYear, _calMonth, 1).getDay();
+  // Last date of month
+  const lastDate = new Date(_calYear, _calMonth + 1, 0).getDate();
+  // Today's string for comparison
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+  const todayYr = today.getFullYear(), todayMo = today.getMonth(), todayDy = today.getDate();
+
+  // Build a Set of logged dates for this month (fast lookup)
+  const monthPrefix = `${_calYear}-${String(_calMonth+1).padStart(2,'0')}`;
+  const loggedDates = new Set(
+    S.logs.filter(l => l.date.startsWith(monthPrefix)).map(l => l.date)
+  );
+
+  // Build grid cells
+  const cells = [];
+  // Blank cells before day 1
+  for(let i = 0; i < firstDay; i++) cells.push('<div class="cal-day empty"></div>');
+
+  let loggedCount = 0, missedCount = 0;
+
+  for(let d = 1; d <= lastDate; d++){
+    const dateStr = `${_calYear}-${String(_calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isFuture = dateStr > todayStr;
+    const isToday = (_calYear===todayYr && _calMonth===todayMo && d===todayDy);
+    const isLogged = loggedDates.has(dateStr);
+
+    let cls = 'cal-day';
+    let extra = '';
+    if(isFuture){
+      cls += ' future';
+    } else if(isLogged){
+      cls += ' logged'; loggedCount++;
+      // Show sales total for the day
+      const log = S.logs.find(l => l.date === dateStr);
+      if(log){
+        const sold = log.entries.reduce((s,e)=>s+(e.sold||0), 0);
+        extra = `<div class="cal-day-sales">${sold}</div>`;
+      }
+    } else {
+      cls += ' missed'; missedCount++;
+    }
+    if(isToday) cls += ' today';
+
+    const onclick = isFuture ? '' : `onclick="calDayClick('${dateStr}',${isLogged})"`;
+    cells.push(`<div class="${cls}" ${onclick}><div class="cal-day-num">${d}</div>${extra}</div>`);
+  }
+
+  document.getElementById('calGrid').innerHTML = cells.join('');
+  document.getElementById('calSummary').textContent =
+    `${loggedCount} logged · ${missedCount} missed`;
+}
+
+function calDayClick(dateStr, isLogged){
+  if(isLogged){
+    // Show the day summary (reuse existing modal)
+    const log = S.logs.find(l => l.date === dateStr);
+    if(log){
+      closeCalendar();
+      showDaySummary(dateStr, log.entries);
+    }
+  } else {
+    // Red day — could be closed day. Show info.
+    toast('No entry for ' + dateStr + '. Open Log tab to backfill if needed.');
+  }
 }
 
 // ════════════ TOAST ════════════
