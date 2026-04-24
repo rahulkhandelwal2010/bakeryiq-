@@ -3,7 +3,7 @@
 //           Cache-first for assets (fonts, icons — rarely change)
 //           Never cache Supabase API calls
 
-const CACHE = 'chabua-v16';
+const CACHE = 'chabua-v17';
 
 // Install — skip waiting so new SW activates immediately
 self.addEventListener('install', e => {
