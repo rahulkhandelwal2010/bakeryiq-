@@ -893,11 +893,11 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
       </div>
       <div class="log-add-qty">
         <label class="fl">Made</label>
-        <input type="number" id="addMade" inputmode="numeric" min="0" value="0" placeholder="0">
+        <input type="number" id="addMade" inputmode="numeric" pattern="[0-9]*" min="0" step="1" placeholder="0" onfocus="this.select()">
       </div>
       <div class="log-add-qty">
         <label class="fl">Sold</label>
-        <input type="number" id="addSold" inputmode="numeric" min="0" value="0" placeholder="0">
+        <input type="number" id="addSold" inputmode="numeric" pattern="[0-9]*" min="0" step="1" placeholder="0" onfocus="this.select()">
       </div>
       <button class="btn" id="addBtn" onclick="addLogRow()" style="margin-top:auto;">+ Add</button>
     </div>
@@ -1731,22 +1731,25 @@ function renderTableRow(itemId){
       <div class="lt-type"><span class="${typeCls}">${typeLabel}</span></div>
     </td>
     <td>
-      <input class="lt-input" type="number" inputmode="numeric" min="0"
+      <input class="lt-input" type="number" inputmode="numeric" pattern="[0-9]*" min="0" step="1"
         id="ltm-${itemId}" value="${e.made||0}"
+        onfocus="this.select()"
         onchange="updateTableEntry('${itemId}','made',+this.value)"
         onblur="updateTableEntry('${itemId}','made',+this.value)">
     </td>
     <td>
-      <input class="lt-input cf-input" type="number" inputmode="numeric" min="0"
+      <input class="lt-input cf-input" type="number" inputmode="numeric" pattern="[0-9]*" min="0" step="1"
         id="ltc-${itemId}" value="${cf}"
+        onfocus="this.select()"
         onchange="updateTableEntry('${itemId}','cf',+this.value)"
         onblur="updateTableEntry('${itemId}','cf',+this.value)"
         title="Editable — set to 0 if discarded">
     </td>
     <td><span class="lt-total" id="ltt-${itemId}">${total}</span></td>
     <td>
-      <input class="lt-input" type="number" inputmode="numeric" min="0"
+      <input class="lt-input" type="number" inputmode="numeric" pattern="[0-9]*" min="0" step="1"
         id="lts-${itemId}" value="${sold}"
+        onfocus="this.select()"
         onchange="updateTableEntry('${itemId}','sold',+this.value)"
         onblur="updateTableEntry('${itemId}','sold',+this.value)">
     </td>
