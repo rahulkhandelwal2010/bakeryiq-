@@ -85,6 +85,7 @@ input[type=text],input[type=number],input[type=date],select{
   border:1.5px solid var(--bd);border-radius:7px;padding:6px 9px;
   font-family:'DM Sans',sans-serif;font-size:.81rem;color:var(--ink);
   background:var(--s2);width:100%;transition:border .2s,background .2s;
+  box-sizing:border-box;max-width:100%;
 }
 input:focus,select:focus{outline:none;border-color:var(--am);background:#fff;}
 .fr{display:flex;gap:9px;align-items:flex-end;flex-wrap:wrap;}
@@ -264,6 +265,7 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
   /* ── Forms & inputs ── */
   input[type=text],input[type=number],input[type=date],select{
     padding:12px 12px;font-size:1rem;width:100%;border-radius:9px;
+    box-sizing:border-box;max-width:100%;
   }
   .btn{padding:13px 18px;font-size:.82rem;border-radius:9px;}
   .fl{font-size:.72rem;}
@@ -859,9 +861,9 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
     <div class="ct">📋 Daily Log</div>
 
     <!-- Date -->
-    <div style="margin-bottom:14px;">
+    <div style="margin-bottom:14px;min-width:0;">
       <label class="fl">Date</label>
-      <input type="date" id="logDate" onchange="onDateChange()" style="width:100%;">
+      <input type="date" id="logDate" onchange="onDateChange()" style="width:100%;box-sizing:border-box;">
     </div>
 
     <!-- Add item row: select + made + sold + button -->
