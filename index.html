@@ -722,6 +722,24 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
 
 <div id="toast"></div>
 
+<!-- MODAL: EXPIRING TODAY -->
+<div class="mb" id="expiringModal" onclick="if(event.target===this)closeExpiring()">
+  <div class="mo" style="max-width:480px;padding:22px;">
+    <div style="text-align:center;margin-bottom:14px;">
+      <div style="font-size:2.4rem;">⚠️</div>
+      <div style="font-family:Georgia,serif;font-size:1.25rem;font-weight:700;color:var(--ink);margin-top:6px;">Expiring Today</div>
+      <div style="font-size:.75rem;color:var(--mu);margin-top:4px;">These items will expire tomorrow</div>
+    </div>
+    <div id="expiringList" style="margin:14px 0;"></div>
+    <div style="background:var(--s2);border-radius:10px;padding:12px;margin-top:14px;font-size:.78rem;color:var(--ink);line-height:1.5;">
+      💡 <strong>Action needed:</strong> Push these items today — consider discounting, sampling, or promoting to avoid waste tomorrow.
+    </div>
+    <div style="text-align:center;margin-top:16px;">
+      <button class="btn" onclick="closeExpiring()" style="padding:10px 32px;font-weight:700;">Got it 👍</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: CALENDAR -->
 <div class="mb" id="calendarModal" onclick="if(event.target===this)closeCalendar()">
   <div class="mo" style="max-width:480px;padding:20px;">
@@ -1392,6 +1410,67 @@ function getCarryForward(itemId, dateStr){
   // Sum remaining qty across all valid batches
   return batches.reduce((s,b) => s + b.qty, 0);
 }
+
+/**
+ * Returns items expiring today — i.e., their oldest batch is on its LAST day of shelf life.
+ * Example: 2-day shelf item baked yesterday → today is its last day → returns it.
+ * Excludes items where nothing is expiring today.
+ *
+ * @returns Array<{item, qty, ageDays, shelfDays}>
+ */
+function getExpiringToday(dateStr){
+  if(!dateStr) dateStr = new Date().toISOString().split('T')[0];
+  const expiring = [];
+
+  S.catalog.filter(c=>c.active).forEach(c=>{
+    const shelfDays = c.shelfDays || 1;
+    // Rebuild batches for this item up to dateStr (mirrors getCarryForward logic)
+    const priorLogs = S.logs
+      .filter(l => l.date <= dateStr)
+      .sort((a,b) => a.date.localeCompare(b.date));
+
+    let batches = [];
+    for(const log of priorLogs){
+      const e = log.entries.find(x => x.id === c.id);
+      if(!e) continue;
+      // Add new batch from today's production
+      if(e.made > 0) batches.push({qty: e.made, bakedOn: log.date});
+      // Sell FIFO from oldest
+      let toSell = e.sold || 0;
+      const newBatches = [];
+      for(const b of batches){
+        if(toSell <= 0){ newBatches.push(b); continue; }
+        if(b.qty <= toSell){ toSell -= b.qty; continue; }
+        newBatches.push({qty: b.qty - toSell, bakedOn: b.bakedOn});
+        toSell = 0;
+      }
+      batches = newBatches;
+    }
+
+    // Keep only non-expired batches (age < shelfDays as of dateStr)
+    batches = batches.filter(b => daysBetween(b.bakedOn, dateStr) < shelfDays);
+    if(!batches.length) return;
+
+    // Find oldest batch
+    const oldest = batches.reduce((a,b) => a.bakedOn < b.bakedOn ? a : b);
+    const age = daysBetween(oldest.bakedOn, dateStr);
+
+    // Expiring today = oldest batch is on its last day of shelf (age === shelfDays-1)
+    // Example: 2-day shelf, baked yesterday (age=1), 1 === 2-1 ✓ → expires tomorrow
+    if(age === shelfDays - 1){
+      expiring.push({
+        item: c,
+        qty: oldest.qty,
+        ageDays: age,
+        shelfDays: shelfDays,
+        bakedOn: oldest.bakedOn
+      });
+    }
+  });
+
+  return expiring;
+}
+
 
 // Helper: returns date string N days offset (negative=future) from a given date string
 function daysAgo(dateStr, n){
@@ -3150,6 +3229,41 @@ function renderCatalogMobile(){
 }
 
 
+// ════════════ EXPIRING TODAY MODAL ════════════
+function checkAndShowExpiring(){
+  // Small delay so main app renders first
+  setTimeout(()=>{
+    const today = new Date().toISOString().split('T')[0];
+    const expiring = getExpiringToday(today);
+    if(!expiring.length) return;  // nothing expiring today, skip
+
+    const list = document.getElementById('expiringList');
+    list.innerHTML = expiring.map(x => {
+      const name = escapeHtml(x.item.name);
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--bd);">
+        <div>
+          <div style="font-weight:700;font-size:.95rem;color:var(--ink);">${name}</div>
+          <div style="font-size:.72rem;color:var(--mu);margin-top:2px;">
+            Baked ${x.ageDays===1?'yesterday':x.ageDays+' days ago'} · ${x.shelfDays}-day shelf
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-family:'Libre Baskerville',serif;font-size:1.2rem;font-weight:700;color:var(--am);">${x.qty}</div>
+          <div style="font-size:.66rem;color:var(--mu);">units</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    // Remove last border for cleaner look
+    const modal = document.getElementById('expiringModal');
+    modal.style.display = 'flex';
+  }, 400);
+}
+
+function closeExpiring(){
+  document.getElementById('expiringModal').style.display = 'none';
+}
+
 // ════════════ CALENDAR MODAL ════════════
 let _calYear, _calMonth; // 0-indexed month
 
@@ -3290,6 +3404,8 @@ function _pinCheck(){
   if(_pin===getPin()){
     sessionStorage.setItem(PIN_SESSION,'1');
     document.getElementById('pinScreen').style.display='none';
+    // Mark that we need to show expiring-today popup after data loads
+    window._showExpiringAfterLoad = true;
     startApp();
   } else {
     _pinError('Wrong PIN. Try again.');
@@ -3359,6 +3475,11 @@ async function startApp(){
     autoAddCarryForwards();
     renderStats();
     updateNav();
+    // Show expiring-today popup if this was a fresh PIN login
+    if(window._showExpiringAfterLoad){
+      window._showExpiringAfterLoad = false;
+      checkAndShowExpiring();
+    }
   } catch(e){
     console.error('startApp error:', e);
     // If preload failed, try fresh load
