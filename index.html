@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Chabua Bakery">
 <meta name="theme-color" content="#1c1208">
 <link rel="manifest" href="manifest.json">
@@ -34,7 +34,24 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 html{font-size:13px;}
-body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--ink);min-height:100vh;}
+
+/* ── iOS PWA status bar bleed ── */
+/* Covers the notch/status bar area with the nav's background colour */
+html {
+  background: var(--ink);  /* same as nav, so status bar area matches */
+}
+@supports (padding: max(0px)) {
+  body {
+    padding-top: max(env(safe-area-inset-top), 0px);
+    padding-left: max(env(safe-area-inset-left), 0px);
+    padding-right: max(env(safe-area-inset-right), 0px);
+  }
+}
+
+body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--ink);min-height:100vh;
+  padding-top:env(safe-area-inset-top,0);
+  padding-left:env(safe-area-inset-left,0);
+  padding-right:env(safe-area-inset-right,0);}
 
 /* NAV */
 .nav{background:var(--ink);display:flex;align-items:stretch;padding-left:18px;padding-top:env(safe-area-inset-top,0);position:sticky;top:0;z-index:300;box-shadow:0 2px 18px rgba(0,0,0,.4);}
@@ -1702,10 +1719,15 @@ function removeEntry(itemId){
 
 function clearLogEntries(){
   F = {};
-  document.getElementById('logEntries').innerHTML = '';
-  document.getElementById('logTableBody').innerHTML = '';
-  document.getElementById('logTableFoot').innerHTML = '';
-  document.getElementById('logTableWrap').style.display = 'none';
+  // Clear all log UI elements explicitly
+  const byId = id => document.getElementById(id);
+  if(byId('logEntries'))    byId('logEntries').innerHTML = '';
+  if(byId('logTableBody'))  byId('logTableBody').innerHTML = '';
+  if(byId('logTableFoot'))  byId('logTableFoot').innerHTML = '';
+  if(byId('logTableWrap'))  byId('logTableWrap').style.display = 'none';
+  // Explicitly clear total/summary display (belt and braces)
+  if(byId('live-rev'))      byId('live-rev').textContent = '';
+  if(byId('live-summary'))  byId('live-summary').textContent = '';
   buildItemPicker();
   updateCFBanner();
   updateLiveSummary();
@@ -1740,9 +1762,20 @@ function updateCFBanner(){
 }
 
 function updateLiveSummary(){
+  const revEl = document.getElementById('live-rev');
+  const sumEl = document.getElementById('live-summary');
+
+  // If no items in F, force clear both texts and return
+  const ids = Object.keys(F);
+  if(!ids.length){
+    if(revEl) revEl.textContent = '';
+    if(sumEl) sumEl.textContent = '';
+    return;
+  }
+
   const dateStr = document.getElementById('logDate').value;
   let totalSold=0, totalRev=0, totalMade=0;
-  Object.keys(F).forEach(id=>{
+  ids.forEach(id=>{
     const e=F[id]; const c=cat(id);
     const cf = e.cf !== undefined ? e.cf : getCarryForward(id,dateStr);
     totalMade += (e.made||0)+cf;
@@ -1750,10 +1783,10 @@ function updateLiveSummary(){
     if(c&&c.price) totalRev += c.price*(e.sold||0);
   });
   const sr = totalMade>0?Math.round(totalSold/totalMade*100):0;
-  document.getElementById('live-rev').textContent = totalRev>0
+  if(revEl) revEl.textContent = totalRev>0
     ? '₹'+totalRev.toLocaleString('en-IN',{maximumFractionDigits:0})+' today'
     : '';
-  document.getElementById('live-summary').textContent = totalSold>0
+  if(sumEl) sumEl.textContent = totalSold>0
     ? `${totalSold} units sold${totalMade>0?' · '+sr+'% sell rate':''}`
     : '';
 }
@@ -2570,19 +2603,64 @@ function renderCatalog(){
       <td style="font-weight:700">${c.name}</td>
       <td><span class="${c.shelfDays>=3?'tm2':'tf'}">${c.shelfDays}d expiry</span></td>
       <td style="text-align:center">${c.shelfDays||1}d</td>
-      <td><input type="number" min="0" step="0.5" value="${c.price||0}" style="width:72px;padding:4px 6px;font-size:.77rem;" onchange="setPrice('${c.id}',+this.value)" onblur="setPrice('${c.id}',+this.value)"></td>
+      <td>
+        <span style="font-family:'Libre Baskerville',serif;font-weight:700;font-size:.85rem;color:var(--ink)">₹${c.price||0}</span>
+        <button class="btn btg" style="padding:2px 8px;font-size:.65rem;margin-left:6px;" onclick="editPrice('${c.id}')" title="Edit price">✏️</button>
+      </td>
       <td><span class="p ${c.active?'pg':'pr'}">${c.active?'Active':'Inactive'}</span></td>
       <td>${n}</td>
       <td>${ts}</td>
       <td style="font-weight:700;color:var(--gr)">₹${((c.price||0)*ts).toLocaleString('en-IN',{maximumFractionDigits:0})}</td>
       <td>${n?avg.toFixed(1):'—'}</td>
       <td>${trendEl}</td>
-      <td>
+      <td style="white-space:nowrap;">
         <button class="btn ${c.active?'btg':'bto'}" style="padding:4px 10px;font-size:.7rem;" onclick="toggleActive('${c.id}')">${c.active?'Deactivate':'Activate'}</button>
+        <button class="btn" style="padding:4px 10px;font-size:.7rem;background:var(--re);color:#fff;border:none;margin-left:4px;" onclick="deleteItem('${c.id}')" title="Delete permanently">🗑️</button>
       </td></tr>`;}).join('');
 }
 
 function toggleActive(id){const c=cat(id);if(!c)return;c.active=!c.active;save();renderCatalog();buildItemPicker();toast((c.active?'Activated':'Deactivated')+': '+c.name);}
+
+// Delete catalog item with strong safeguards
+function deleteItem(id){
+  const c = cat(id); if(!c) return;
+
+  // Count how many log entries reference this item
+  const logCount = S.logs.reduce((sum, l) =>
+    sum + l.entries.filter(e => e.id === id).length, 0);
+
+  let msg = `⚠️ DELETE "${c.name}" permanently?\n\n`;
+  if(logCount > 0){
+    msg += `This item has ${logCount} log entr${logCount===1?'y':'ies'} in your history.\n`;
+    msg += `Deleting will REMOVE those entries and affect historical reports.\n\n`;
+    msg += `Tip: Consider DEACTIVATING instead (hides from Log/Plan but keeps history).\n\n`;
+  } else {
+    msg += `This item has no logged data yet.\n\n`;
+  }
+  msg += `This cannot be undone.\n\nType DELETE to confirm:`;
+
+  const confirm1 = prompt(msg, '');
+  if(confirm1 !== 'DELETE'){
+    if(confirm1 !== null) toast('Delete cancelled — must type DELETE exactly');
+    return;
+  }
+
+  // Remove item from catalog
+  S.catalog = S.catalog.filter(x => x.id !== id);
+
+  // Remove item from all log entries
+  S.logs.forEach(l => {
+    l.entries = l.entries.filter(e => e.id !== id);
+  });
+  // Remove any now-empty logs
+  S.logs = S.logs.filter(l => l.entries.length > 0);
+
+  save();
+  renderCatalog();
+  buildItemPicker();
+  renderStats();
+  toast(`Deleted "${c.name}" permanently`);
+}
 
 
 // ── MOBILE NAV ──────────────────────────────
@@ -2606,6 +2684,33 @@ function setPrice(id,val){
   const c=cat(id);if(!c)return;
   c.price=val;save();renderCatalog();
   toast('Price updated ✓');
+}
+
+// Safe price edit — prompts user, validates, confirms
+function editPrice(id){
+  const c = cat(id); if(!c) return;
+  const current = c.price || 0;
+  const input = prompt(`Edit price for ${c.name}\n\nCurrent price: ₹${current}\nEnter new price:`, current);
+  if(input === null) return; // user cancelled
+  const newPrice = parseFloat(input);
+  if(isNaN(newPrice) || newPrice < 0){
+    alert('Please enter a valid price (0 or greater).');
+    return;
+  }
+  if(newPrice === current){
+    toast('Price unchanged');
+    return;
+  }
+  // Warn if large change (>50% up or down) to catch typos
+  if(current > 0 && (newPrice > current * 1.5 || newPrice < current * 0.5)){
+    if(!confirm(`Large price change for ${c.name}:\n₹${current} → ₹${newPrice}\n\nConfirm this change?`)){
+      return;
+    }
+  }
+  c.price = newPrice;
+  save();
+  renderCatalog();
+  toast(`${c.name} price: ₹${current} → ₹${newPrice}`);
 }
 
 function itemRevenue(id){
@@ -3022,8 +3127,12 @@ function renderCatalogMobile(){
             ${trendEl}
           </div>
         </div>
-        <button class="btn ${c.active?'btg':'bto'}" style="padding:5px 12px;font-size:.7rem;"
-          onclick="toggleActive('${c.id}')">${c.active?'Deactivate':'Activate'}</button>
+        <div style="display:flex;gap:6px;">
+          <button class="btn ${c.active?'btg':'bto'}" style="padding:5px 10px;font-size:.7rem;"
+            onclick="toggleActive('${c.id}')">${c.active?'Deactivate':'Activate'}</button>
+          <button class="btn" style="padding:5px 10px;font-size:.7rem;background:var(--re);color:#fff;border:none;"
+            onclick="deleteItem('${c.id}')" title="Delete permanently">🗑️</button>
+        </div>
       </div>
       <div class="cat-card-row">
         <div class="cat-card-stat">Days logged: <strong>${n}</strong></div>
@@ -3032,11 +3141,9 @@ function renderCatalogMobile(){
         <div class="cat-card-stat">Revenue: <strong style="color:var(--gr)">₹${rev.toLocaleString('en-IN',{maximumFractionDigits:0})}</strong></div>
       </div>
       <div class="cat-card-price">
-        <label>Price ₹</label>
-        <input type="number" min="0" step="0.5" value="${c.price||0}"
-          onchange="setPrice('${c.id}',+this.value)"
-          onblur="setPrice('${c.id}',+this.value)">
-        <span style="font-size:.68rem;color:var(--mu)">/unit</span>
+        <label>Price</label>
+        <span style="font-family:'Libre Baskerville',serif;font-weight:700;font-size:1rem;color:var(--ink);margin-right:auto;">₹${c.price||0}/unit</span>
+        <button class="btn btg" style="padding:4px 12px;font-size:.72rem;" onclick="editPrice('${c.id}')">✏️ Edit</button>
       </div>
     </div>`;
   }).join('') || '<p style="color:var(--mu);padding:12px 0;font-size:.85rem;">No items yet. Tap + Add New Item above.</p>';
@@ -3227,13 +3334,26 @@ if('serviceWorker' in navigator){
 // ════════════ INIT ════════════
 async function startApp(){
   const ov=document.getElementById('loadingOverlay');
-  if(ov) ov.style.display='flex';
+  // If we already preloaded and it's done, skip the overlay entirely for instant feel
+  const preloadDone = _preloadPromise && (await Promise.race([
+    _preloadPromise.then(()=>true),
+    new Promise(r=>setTimeout(()=>r(false), 50))  // 50ms check
+  ]));
+
+  if(!preloadDone && ov) ov.style.display='flex';
+
   // Safety: always hide overlay after 8 seconds no matter what
   const safetyTimer = setTimeout(()=>{
     if(ov) ov.style.display='none';
   }, 8000);
+
   try{
-    await load();
+    // Use preloaded data if available, else load fresh
+    if(_preloadPromise){
+      await _preloadPromise;
+    } else {
+      await load();
+    }
     initLogDate();
     buildItemPicker();
     autoAddCarryForwards();
@@ -3241,6 +3361,19 @@ async function startApp(){
     updateNav();
   } catch(e){
     console.error('startApp error:', e);
+    // If preload failed, try fresh load
+    if(_preloadPromise){
+      _preloadPromise = null;
+      try {
+        if(ov) ov.style.display='flex';
+        await load();
+        initLogDate();
+        buildItemPicker();
+        autoAddCarryForwards();
+        renderStats();
+        updateNav();
+      } catch(e2){ console.error('Fresh load also failed:', e2); }
+    }
   } finally{
     clearTimeout(safetyTimer);
     if(ov) ov.style.display='none';
@@ -3277,12 +3410,26 @@ document.addEventListener('visibilitychange', async ()=>{
   }
 });
 
+// Preload data in background while user enters PIN
+// This hides most network latency behind the PIN entry time
+let _preloadPromise = null;
+function startPreload(){
+  if(_preloadPromise) return _preloadPromise;
+  _preloadPromise = load().catch(e=>{
+    console.error('Preload error:', e);
+    _preloadPromise = null;  // allow retry
+  });
+  return _preloadPromise;
+}
+
 (()=>{
   if(sessionStorage.getItem(PIN_SESSION)==='1'){
     document.getElementById('pinScreen').style.display='none';
     startApp();
+  } else {
+    // Kick off data preload in the background while user types PIN
+    startPreload();
   }
-  // else PIN screen stays visible, startApp called after correct PIN
 })();
 </script>
 </body>
