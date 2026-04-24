@@ -15,23 +15,29 @@
 @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap');
 
 :root{
-  --bg:#f6f1ea; --s:#fff; --s2:#faf6f0; --s3:#f2ebe0;
-  --ink:#1c1208; --ink2:#5a3c1c; --mu:#9c7e62;
-  --bd:#e2cfb4; --bd2:#c8b090;
-  --am:#b8600a; --aml:#d4862a; --amb:#fdf3e6;
-  --re:#a02828; --reb:#fdf0ee;
-  --gr:#246038; --grb:#eaf5ee;
-  --bl:#1a4e88; --blb:#edf3fc;
-  --or:#c04a08; --orb:#fdf0e4;
-  --sh:0 2px 16px rgba(28,18,8,.08);
-  --sh2:0 6px 32px rgba(28,18,8,.14);
+  --bg:#faf5ed;
+  --s:#ffffff;
+  --s2:#f4ebd9;
+  --s3:#ebdcbe;
+  --bd:#e4d3b8;
+  --ink:#2a1a08;
+  --ink2:#5c3517;
+  --mu:#8a6840;
+  --am:#c97626;
+  --aml:#d4862a;
+  --gr:#4a7c3a;
+  --grl:#5c9c48;
+  --re:#b84040;
+  --rel:#d85858;
+  --bl:#3d6fa8;
+  --bll:#5a8fd0;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 html{font-size:13px;}
 body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--ink);min-height:100vh;}
 
 /* NAV */
-.nav{background:var(--ink);display:flex;align-items:stretch;padding-left:18px;position:sticky;top:0;z-index:300;box-shadow:0 2px 18px rgba(0,0,0,.4);}
+.nav{background:var(--ink);display:flex;align-items:stretch;padding-left:18px;padding-top:env(safe-area-inset-top,0);position:sticky;top:0;z-index:300;box-shadow:0 2px 18px rgba(0,0,0,.4);}
 .brand{font-family:'Libre Baskerville',serif;font-size:1.2rem;font-weight:700;color:var(--aml);display:flex;align-items:center;gap:8px;padding:0 16px 0 0;border-right:1px solid #3a2510;margin-right:2px;white-space:nowrap;}
 .brand small{font-family:'DM Sans',sans-serif;font-size:.6rem;font-weight:400;color:#7a5530;letter-spacing:.5px;}
 .tab{padding:0 12px;font-size:.69rem;font-weight:700;color:#7a5530;cursor:pointer;transition:color .15s;border-bottom:3px solid transparent;white-space:nowrap;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;}
@@ -372,25 +378,25 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
 
 
 /* ── PIN SCREEN ── */
-#pinScreen{position:fixed;inset:0;z-index:10000;background:#1c1208;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:20px;}
-.pin-logo{font-family:Georgia,serif;font-size:2rem;font-weight:700;color:#d4862a;margin-bottom:4px;}
-.pin-sub{font-size:.72rem;color:#7a5530;margin-bottom:32px;letter-spacing:3px;text-transform:uppercase;}
-.pin-label{font-size:.72rem;font-weight:600;color:#9a7a60;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;}
+#pinScreen{position:fixed;inset:0;z-index:10000;background:linear-gradient(160deg,#faf5ed 0%,#f1e7d4 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
+  padding:max(20px,env(safe-area-inset-top)) 20px max(20px,env(safe-area-inset-bottom));}
+.pin-logo{font-family:Georgia,serif;font-size:2rem;font-weight:700;color:#5c3517;margin-bottom:4px;}
+.pin-sub{font-size:.72rem;color:#8a6840;margin-bottom:32px;letter-spacing:3px;text-transform:uppercase;}
+.pin-label{font-size:.72rem;font-weight:600;color:#6b4a2a;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;}
 .pin-dots{display:flex;gap:14px;margin-bottom:8px;}
-.pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid #3a2510;background:transparent;transition:background .15s;}
-.pin-dot.filled{background:#d4862a;border-color:#d4862a;}
-.pin-dot.error{background:#a02828;border-color:#a02828;}
-.pin-error{color:#c04040;font-size:.75rem;font-weight:600;min-height:22px;margin-bottom:16px;text-align:center;}
+.pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid #c4a888;background:transparent;transition:background .15s;}
+.pin-dot.filled{background:#b87333;border-color:#b87333;}
+.pin-dot.error{background:#c04040;border-color:#c04040;}
+.pin-error{color:#9d2c2c;font-size:.75rem;font-weight:600;min-height:22px;margin-bottom:16px;text-align:center;}
 .pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:280px;}
-.pin-key{background:#2a1a08;border:none;border-radius:14px;color:#d4862a;
+.pin-key{background:#fff;border:1px solid #e4d3b8;border-radius:14px;color:#5c3517;
   font-family:'DM Sans',sans-serif;font-size:1.5rem;font-weight:600;
-  height:64px;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
-.pin-key:active{background:#3a2810;transform:scale(.94);}
-.pin-key.del{font-size:1rem;color:#9a7a60;}
-.pin-key.empty{background:transparent;pointer-events:none;}
-.pin-change-btn{margin-top:20px;background:none;border:none;color:#5a3a20;
-  font-size:.72rem;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:underline;}
+  height:64px;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  box-shadow:0 1px 3px rgba(92,53,23,.08);transition:transform .1s, background .15s;}
+.pin-key:active{background:#f4e8d1;transform:scale(.94);}
+.pin-key.del{font-size:1rem;color:#8a6840;}
+.pin-key.empty{background:transparent;border:none;box-shadow:none;pointer-events:none;}
 @keyframes pinShake{0%,100%{transform:none}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
 .pin-shake{animation:pinShake .3s ease;}
 @supports(padding:env(safe-area-inset-bottom)){
@@ -654,10 +660,10 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
     <button class="pin-key" onclick="pinKey('0')">0</button>
     <button class="pin-key del" onclick="pinDel()">&#9003;</button>
   </div>
-  <button class="pin-change-btn" onclick="pinStartChange()">Change PIN</button>
+  <!-- Change PIN button removed from login screen for security; use Catalog tab -->
 </div>
 
-<div id="loadingOverlay" style="position:fixed;inset:0;background:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:16px;">
+<div id="loadingOverlay" style="position:fixed;inset:0;background:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:16px;padding:env(safe-area-inset-top,0) 20px env(safe-area-inset-bottom,0);">
   <div style="font-family:'Libre Baskerville',serif;font-size:1.6rem;font-weight:700;color:var(--aml)">🥐 Chabua Bakery</div>
   <div style="color:#9a7a60;font-size:.82rem" id="loadingMsg">Connecting to database...</div>
   <div style="display:flex;gap:6px;margin-top:4px">
