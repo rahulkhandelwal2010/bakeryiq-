@@ -2266,23 +2266,46 @@ function removeEntry(itemId){
 }
 
 function clearLogEntries(){
-  F = {};
-  // Clear all log UI elements explicitly
+  // Resets the day's entries while preserving carry-forward rows.
+  //
+  // Behavior:
+  // - Rows with a non-zero carry-forward value (auto-added or user-edited) STAY.
+  //   Their typed made/sold values are reset to 0; the CF value is preserved.
+  // - Rows that were manually added from the picker (cf=0) are dropped entirely.
+  // - The CF column lock is reset (any in-progress unlock state is closed).
+  //
+  // This way "Clear" never wipes the CF values the user may have edited via
+  // the column-level edit button — those can only be changed via that button.
+  // To wipe everything including CF, change the date or refresh.
   const byId = id => document.getElementById(id);
-  if(byId('logEntries'))    byId('logEntries').innerHTML = '';
-  if(byId('logTableBody'))  byId('logTableBody').innerHTML = '';
-  if(byId('logTableFoot'))  byId('logTableFoot').innerHTML = '';
-  if(byId('logTableWrap'))  byId('logTableWrap').style.display = 'none';
-  // Explicitly clear total/summary display (belt and braces)
-  if(byId('live-rev'))      byId('live-rev').textContent = '';
-  if(byId('live-summary'))  byId('live-summary').textContent = '';
-  // Reset CF lock to default (locked) when clearing.
+  const newF = {};
+  Object.keys(F).forEach(id => {
+    const e = F[id];
+    if(!e) return;
+    // Preserve only rows backed by carry-forward stock.
+    if((e.cf||0) > 0){
+      newF[id] = {made:0, sold:0, cf:e.cf};
+    }
+  });
+  F = newF;
+
+  // Re-render the table from the preserved rows.
+  if(byId('logTableBody')) byId('logTableBody').innerHTML = '';
+  Object.keys(F).forEach(id => renderTableRow(id));
+  if(byId('logTableWrap')){
+    byId('logTableWrap').style.display = Object.keys(F).length ? 'block' : 'none';
+  }
+
+  // Reset CF lock so the column appears in its default read-only state.
   if(_cfUnlocked) toggleCfEdit();
+
   buildItemPicker();
   updateCFBanner();
   updateLiveSummary();
+  updateTableFooter();
+  // Drop any unsaved typed values from localStorage so a refresh doesn't
+  // restore them. CF values themselves are recomputed from prior logs anyway.
   clearDraft();
-  autoAddCarryForwards();
 }
 
 function updateCFBanner(){
@@ -2382,11 +2405,23 @@ function saveDay(){
   // If save fails, the data is still in S.logs; the snapshot logic will retry.
   clearDraft();
   F = {};
+  // Clear BOTH the live table body and the (legacy) cards container.
+  // Without clearing logTableBody, orphan rows from before save would remain
+  // in the DOM after F is reset, leading to confusing input-doesn't-stick behaviour.
+  const tb = document.getElementById('logTableBody');
+  if(tb) tb.innerHTML = '';
+  const tf = document.getElementById('logTableFoot');
+  if(tf) tf.innerHTML = '';
   document.getElementById('logEntries').innerHTML = '';
   // Auto-lock CF — leaving the column unlocked across saves is sloppy and
   // could cause accidental edits when the next day's rows auto-populate.
   if(_cfUnlocked) toggleCfEdit();
   autoAddCarryForwards();
+  // Explicitly disable Save Day button: the form has been reset, no typed data,
+  // so the button should not be clickable until the user enters something new.
+  // (autoAddCarryForwards calls updateLiveSummary which handles this, but be
+  // defensive in case the call order changes in the future.)
+  updateSaveDayButton();
   renderStats();
 
   saveAndWait()
@@ -2609,7 +2644,10 @@ function intel(itemId){
   // This treats day-1-leftover-sold-on-day-2 as not-waste (it is, because
   // the item's shelf life accommodated it). Only stock that crossed shelfDays
   // unsold is counted as waste. Falls back gracefully when there's no data.
-  const today = new Date().toISOString().split('T')[0];
+  // Anchor `today` to the latest log date (not wall-clock today). Without this,
+  // a user who hasn't logged for 7+ days sees in-flight stock at the end of the
+  // last log charged as expired, falsely shifting signals toward "overstock".
+  const today = (L.length ? L[L.length-1].date : new Date().toISOString().split('T')[0]);
   const wAll = computeItemWaste(itemId, today, null);  // null = all history
   const sellRate = wAll && wAll.trueSellRate !== null
     ? wAll.trueSellRate
@@ -3000,7 +3038,11 @@ function itemSignal(itemId, dow){
   // production for not having had time to sell yet.
   const last7 = allE.slice(-7);
   const totalSold7  = last7.reduce((s,e)=>s+e.sold, 0);
-  const todayStr = new Date().toISOString().split('T')[0];
+  // Anchor `todayStr` to the latest log date (not wall-clock today). Otherwise,
+  // when the user hasn't logged for several days, in-flight stock from the
+  // most recent log gets charged as expired against the wall-clock asOf,
+  // falsely tipping signals toward "overstock".
+  const todayStr = L.length ? L[L.length-1].date : new Date().toISOString().split('T')[0];
   const w7 = computeItemWaste(c.id, todayStr, 7);
   const totalMade7 = last7.reduce((s,e)=>s+e.made, 0);  // kept for callers/UI
   const sellRate7 = (w7 && w7.trueSellRate !== null)
