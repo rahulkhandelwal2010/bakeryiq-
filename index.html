@@ -835,6 +835,8 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
       <div style="font-family:'Libre Baskerville',serif;font-size:1.1rem;font-weight:700;" id="sumTitle">Day Saved</div>
       <button onclick="closeSummary()" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--mu);padding:2px 6px;">✕</button>
     </div>
+    <!-- Save status line — shown while saveDay() awaits the network round-trip -->
+    <div id="sumSaveStatus" style="display:none;font-size:.78rem;font-weight:600;margin-bottom:12px;padding:8px 12px;border-radius:8px;"></div>
     <!-- Big numbers row -->
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;" id="sumStats"></div>
     <!-- Per-item breakdown -->
@@ -1288,6 +1290,39 @@ function save(){
       _pendingRetry = setTimeout(()=>{ save(); }, 5000);
     });
   try{updateNav();}catch(e){}
+}
+
+// Awaitable save — same retry/constraint behaviour as save(), but returns a
+// promise that resolves on success or rejects on (non-retried) failure.
+// Used by callers that need to know when the save actually completed
+// (e.g. saveDay() wants to update its summary modal).
+function saveAndWait(){
+  setSaveStatus('saving');
+  return saveAll()
+    .then(()=>{
+      setSaveStatus('idle');
+      if(_pendingRetry){ clearTimeout(_pendingRetry); _pendingRetry = null; }
+      try{updateNav();}catch(e){}
+    })
+    .catch(e=>{
+      console.error('Save failed:', e.message);
+      const msg = String(e.message||'');
+      const isConstraint = msg.includes('bakeryiq_log_entries_sold_lte_available')
+                        || msg.includes('bakeryiq_log_entries_made_nonneg')
+                        || msg.includes('bakeryiq_log_entries_sold_nonneg')
+                        || msg.includes('bakeryiq_log_entries_carry_in_nonneg');
+      setSaveStatus('error');
+      if(!isConstraint){
+        // Schedule the same background retry as save() for transient errors.
+        if(_pendingRetry) clearTimeout(_pendingRetry);
+        _pendingRetry = setTimeout(()=>{ save(); }, 5000);
+      } else {
+        if(_pendingRetry){ clearTimeout(_pendingRetry); _pendingRetry = null; }
+      }
+      try{updateNav();}catch(_){}
+      // Re-throw so the awaiter knows the save failed.
+      throw e;
+    });
 }
 
 // Diff-based save. Each step updates the server snapshot ONLY after the
@@ -2023,6 +2058,15 @@ function removeEntry(itemId){
   updateCFBanner();
   updateLiveSummary();
   updateTableFooter();
+  // Belt and braces: if F is now empty, force-clear the live-rev display
+  // directly. updateLiveSummary() should already handle this, but a stray
+  // input-blur firing after the click can re-trigger an update with stale
+  // values. Doing it here last ensures the texts end up empty.
+  if(!Object.keys(F).length){
+    const byId = id => document.getElementById(id);
+    if(byId('live-rev'))     byId('live-rev').textContent = '';
+    if(byId('live-summary')) byId('live-summary').textContent = '';
+  }
   persistDraft();
 }
 
@@ -2116,18 +2160,68 @@ function saveDay(){
   S.logs = S.logs.filter(l=>l.date!==dv);
   S.logs.push({date:dv, dow, entries});
   S.logs.sort((a,b)=>a.date.localeCompare(b.date));
-  save();
-  clearDraft();  // draft saved successfully
+
+  // Open modal IMMEDIATELY so the user sees their day's data right away,
+  // with a "Saving..." indicator. Then await the network and update the
+  // status to ✓ Saved (auto-close) or ⚠ Failed (stays open).
   showDaySummary(dv, entries);
-  F={};
-  document.getElementById('logEntries').innerHTML='';
+  setSummarySaveStatus('saving');
+
+  // Reset the form right away — the user is "done" with this date.
+  // If save fails, the data is still in S.logs; the snapshot logic will retry.
+  clearDraft();
+  F = {};
+  document.getElementById('logEntries').innerHTML = '';
   autoAddCarryForwards();
   renderStats();
+
+  saveAndWait()
+    .then(()=>{
+      setSummarySaveStatus('ok');
+      // Auto-close after a beat so the user sees the confirmation.
+      setTimeout(()=>{
+        const m = document.getElementById('summaryModal');
+        if(m && m.classList.contains('open')) closeSummary();
+      }, 1500);
+    })
+    .catch(()=>{
+      // Don't auto-close on failure — user needs to know.
+      setSummarySaveStatus('error');
+    });
+}
+
+// Show/clear/update the save status banner inside the day-summary modal.
+function setSummarySaveStatus(state){
+  const el = document.getElementById('sumSaveStatus');
+  if(!el) return;
+  if(state === 'saving'){
+    el.style.display = 'block';
+    el.style.background = 'var(--s2)';
+    el.style.color = 'var(--mu)';
+    el.textContent = '⟳ Saving to cloud…';
+  } else if(state === 'ok'){
+    el.style.display = 'block';
+    el.style.background = 'rgba(74,124,58,.12)';
+    el.style.color = 'var(--gr)';
+    el.textContent = '✓ Saved';
+  } else if(state === 'error'){
+    el.style.display = 'block';
+    el.style.background = 'rgba(184,64,64,.10)';
+    el.style.color = 'var(--re)';
+    el.textContent = '⚠ Save failed — data is queued, will retry automatically';
+  } else {
+    el.style.display = 'none';
+    el.textContent = '';
+  }
 }
 
 function showDaySummary(dateStr, entries){
   const dow = new Date(dateStr+'T00:00:00').getDay();
   const fmt = v => v >= 1000 ? '₹'+(v/1000).toFixed(1)+'k' : '₹'+Math.round(v);
+
+  // Reset save-status banner — only saveDay() turns it back on.
+  // (Calendar clicks open this modal too; they shouldn't show stale status.)
+  setSummarySaveStatus(null);
 
   // Totals
   let totalSold=0, totalMade=0, totalRev=0, stockouts=0, totalLeftover=0;
