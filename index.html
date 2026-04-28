@@ -1668,9 +1668,27 @@ function buildItemPicker(){
 }
 
 function onDateChange(){
-  // When date changes, rebuild picker and check for carry-forwards to auto-add
+  // When date changes, wipe stale form state from the previous date.
+  // Without this, items auto-added for the OLD date stay in F and on screen,
+  // because autoAddCarryForwards() skips items already in F.
+  // This also means: switching away from a date with typed entries discards them.
+  // (Acceptable trade-off — the drafting system only holds one date at a time.)
+
+  // Warn if there are typed values that will be lost (cf-only auto-adds don't count)
+  const hadTypedData = Object.values(F).some(e => (e.made||0) > 0 || (e.sold||0) > 0);
+  F = {};
+  const byId = id => document.getElementById(id);
+  if(byId('logTableBody')) byId('logTableBody').innerHTML = '';
+  if(byId('logTableFoot')) byId('logTableFoot').innerHTML = '';
+  if(byId('logTableWrap')) byId('logTableWrap').style.display = 'none';
+  if(byId('logEntries'))   byId('logEntries').innerHTML = '';
+  // Drop the previous date's draft so it doesn't try to restore onto the new date.
+  // (restoreDraft already guards by date, but this keeps localStorage clean.)
+  clearDraft();
+
   buildItemPicker();
   autoAddCarryForwards();
+  if(hadTypedData) toast('Cleared form for new date — save before switching to keep entries');
 }
 
 function autoAddCarryForwards(){
