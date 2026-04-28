@@ -606,6 +606,21 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
   box-shadow:0 0 0 3px rgba(26,78,136,.1);
 }
 
+/* Carry-forward column.
+   Default: chip-style read-only display (cf-display).
+   When the column-level toggle button unlocks editing, the input (cf-input)
+   takes over. Both elements occupy the same visual footprint so the column
+   width doesn't shift between locked and unlocked states. */
+.cf-cell{
+  display:flex;align-items:center;justify-content:center;
+}
+.cf-display{
+  display:inline-block;min-width:52px;text-align:center;
+  font-weight:700;font-size:.88rem;color:var(--bl);
+  background:var(--blb);border:1.5px solid #b0c8f0;border-radius:7px;
+  padding:5px 8px;
+}
+
 /* Total cell */
 .lt-total{font-weight:700;font-size:.9rem;color:var(--ink);}
 .lt-stockout{color:var(--re);font-size:.65rem;font-weight:700;}
@@ -668,6 +683,22 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
   #calendarModal .mo{margin:12px;padding:16px;}
   .cal-day{min-height:42px;font-size:.88rem;}
   .cal-day-sales{font-size:.52rem;}
+
+  /* ── Daily log table compaction ──
+     Tighten cells, fonts, and inputs to fit a 360px-wide phone viewport.
+     The CF chip and CF input are deliberately the same width so the column
+     doesn't reflow when the user toggles edit mode. */
+  .log-table th,
+  .log-table td{padding:7px 5px;}
+  .log-table th{font-size:.6rem;letter-spacing:.3px;}
+  .lt-input{width:44px;font-size:.82rem;padding:5px 2px;}
+  .lt-name{font-size:.76rem;}
+  .lt-type{font-size:.55rem;}
+  .lt-total{font-size:.85rem;}
+  .cf-display{
+    min-width:44px;padding:5px 4px;font-size:.82rem;border-radius:5px;
+  }
+  .lt-input.cf-input{width:44px;}
 }
 
 </style>
@@ -908,21 +939,34 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
     </div>
 
     <!-- Entries table -->
-    <div id="logTableWrap" style="display:none;margin-top:14px;overflow-x:auto;-webkit-overflow-scrolling:touch;">
-      <table class="log-table">
-        <thead>
-          <tr>
-            <th>Item</th>
-            <th>Made</th>
-            <th>Carry Fwd</th>
-            <th>Total</th>
-            <th>Sold</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="logTableBody"></tbody>
-        <tfoot id="logTableFoot"></tfoot>
-      </table>
+    <div id="logTableWrap" style="display:none;margin-top:14px;">
+      <!-- CF lock toggle: by default the Carry Fwd column is read-only.
+           Tap to unlock all CF cells at once for editing; tap again to lock. -->
+      <div style="display:flex;justify-content:flex-end;margin-bottom:6px;">
+        <button type="button" id="cfLockBtn" onclick="toggleCfEdit()"
+          style="background:transparent;border:1px solid var(--bd);
+          border-radius:6px;padding:4px 10px;font-size:.7rem;font-weight:600;
+          color:var(--mu);cursor:pointer;-webkit-tap-highlight-color:transparent;
+          font-family:'DM Sans',sans-serif;letter-spacing:.2px;">
+          🔒 Edit Carry Fwd
+        </button>
+      </div>
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+        <table class="log-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Carry Fwd</th>
+              <th>Made</th>
+              <th>Total</th>
+              <th>Sold</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="logTableBody"></tbody>
+          <tfoot id="logTableFoot"></tfoot>
+        </table>
+      </div>
     </div>
 
     <!-- Footer -->
@@ -1828,6 +1872,8 @@ function onDateChange(){
   // Drop the previous date's draft so it doesn't try to restore onto the new date.
   // (restoreDraft already guards by date, but this keeps localStorage clean.)
   clearDraft();
+  // Reset CF lock to default (locked) for the new date.
+  if(_cfUnlocked) toggleCfEdit();
 
   buildItemPicker();
   autoAddCarryForwards();
@@ -2072,19 +2118,28 @@ function renderTableRow(itemId){
       <div class="lt-type"><span class="${typeCls}">${typeLabel}</span></div>
     </td>
     <td>
+      <!-- Carry-forward: chip (read-only) + hidden input. The single column-
+           level toggle button (above the table) swaps display vs. input for
+           ALL rows at once. No per-row edit affordance, so the column stays
+           narrow whether locked or unlocked. -->
+      <div class="cf-cell">
+        <span class="cf-display" id="ltcd-${itemId}"
+          style="${_cfUnlocked ? 'display:none;' : ''}">${cf}</span>
+        <input class="lt-input cf-input" type="number" inputmode="numeric" pattern="[0-9]*" min="0" step="1"
+          id="ltc-${itemId}" value="${cf}"
+          style="${_cfUnlocked ? '' : 'display:none;'}"
+          onfocus="this.select()"
+          onchange="updateTableEntry('${itemId}','cf',+this.value);syncCfDisplay('${itemId}')"
+          onblur="updateTableEntry('${itemId}','cf',+this.value);syncCfDisplay('${itemId}')"
+          title="Set to 0 if discarded">
+      </div>
+    </td>
+    <td>
       <input class="lt-input" type="number" inputmode="numeric" pattern="[0-9]*" min="0" step="1"
         id="ltm-${itemId}" value="${e.made||0}"
         onfocus="this.select()"
         onchange="updateTableEntry('${itemId}','made',+this.value)"
         onblur="updateTableEntry('${itemId}','made',+this.value)">
-    </td>
-    <td>
-      <input class="lt-input cf-input" type="number" inputmode="numeric" pattern="[0-9]*" min="0" step="1"
-        id="ltc-${itemId}" value="${cf}"
-        onfocus="this.select()"
-        onchange="updateTableEntry('${itemId}','cf',+this.value)"
-        onblur="updateTableEntry('${itemId}','cf',+this.value)"
-        title="Editable — set to 0 if discarded">
     </td>
     <td><span class="lt-total" id="ltt-${itemId}">${total}</span></td>
     <td>
@@ -2100,6 +2155,38 @@ function renderTableRow(itemId){
 
   if(existing) existing.replaceWith(tr);
   else tbody.appendChild(tr);
+}
+
+// Global CF lock state. When false, all CF cells show as read-only chips.
+// When true, all CF cells show as editable inputs. One column-level toggle
+// flips this for every row at once.
+let _cfUnlocked = false;
+
+function toggleCfEdit(){
+  _cfUnlocked = !_cfUnlocked;
+  // Toggle every row's CF display/input visibility
+  document.querySelectorAll('#logTableBody tr').forEach(tr => {
+    const itemId = tr.id.replace(/^ltr-/, '');
+    const disp = document.getElementById('ltcd-'+itemId);
+    const inp  = document.getElementById('ltc-'+itemId);
+    if(disp) disp.style.display = _cfUnlocked ? 'none' : '';
+    if(inp)  inp.style.display  = _cfUnlocked ? '' : 'none';
+  });
+  // Update the toggle button label
+  const btn = document.getElementById('cfLockBtn');
+  if(btn){
+    btn.textContent = _cfUnlocked ? '🔓 Lock Carry Fwd' : '🔒 Edit Carry Fwd';
+    btn.style.color = _cfUnlocked ? 'var(--bl)' : 'var(--mu)';
+    btn.style.borderColor = _cfUnlocked ? '#b0c8f0' : 'var(--bd)';
+  }
+}
+
+// Sync a row's CF chip text to whatever is now in F (after an edit). Called
+// after updateTableEntry runs, so any clamping is reflected back in the chip.
+function syncCfDisplay(itemId){
+  const e = F[itemId];
+  const disp = document.getElementById('ltcd-'+itemId);
+  if(e && disp) disp.textContent = e.cf || 0;
 }
 
 function updateTableEntry(itemId, key, val){
@@ -2143,8 +2230,8 @@ function updateTableFooter(){
   });
   foot.innerHTML = `<tr>
     <td><span class="lt-foot-label">${ids.length} item${ids.length>1?'s':''}</span></td>
-    <td><strong>${totalMade}</strong></td>
     <td><strong>${totalCf}</strong></td>
+    <td><strong>${totalMade}</strong></td>
     <td><strong>${totalQty}</strong></td>
     <td><strong>${totalSold}</strong></td>
     <td></td>
@@ -2189,6 +2276,8 @@ function clearLogEntries(){
   // Explicitly clear total/summary display (belt and braces)
   if(byId('live-rev'))      byId('live-rev').textContent = '';
   if(byId('live-summary'))  byId('live-summary').textContent = '';
+  // Reset CF lock to default (locked) when clearing.
+  if(_cfUnlocked) toggleCfEdit();
   buildItemPicker();
   updateCFBanner();
   updateLiveSummary();
@@ -2294,6 +2383,9 @@ function saveDay(){
   clearDraft();
   F = {};
   document.getElementById('logEntries').innerHTML = '';
+  // Auto-lock CF — leaving the column unlocked across saves is sloppy and
+  // could cause accidental edits when the next day's rows auto-populate.
+  if(_cfUnlocked) toggleCfEdit();
   autoAddCarryForwards();
   renderStats();
 
@@ -2539,8 +2631,23 @@ function intel(itemId){
     : 0;
   const earlySellRate = n > 0 ? earlySellouts / n : 0;
 
+  // Adaptive stockout multiplier (Improvement A).
+  // On a stockout day we don't know what real demand was, only that it
+  // exceeded supply. The harder/more often the item stocks out, the bigger
+  // the inferred shortfall. Old code used a fixed +15% bump. New code:
+  //   1.10 + 0.30 × soRate_recent, range 1.10..1.40.
+  // Rare stockouts → small bump. Chronic stockouts → big bump.
+  // Recent window = last 14 days (so the multiplier responds to current
+  // patterns, not ancient history).
+  const recentSoRate = (() => {
+    const recent = allE.slice(-14);
+    if(!recent.length) return 0;
+    return recent.filter(e=>e.stockout).length / recent.length;
+  })();
+  const stockoutMul = 1.10 + 0.30 * Math.min(1, Math.max(0, recentSoRate));
+
   // Self-correcting demand observations
-  const obs=allE.map(e=>e.stockout?e.made*1.15:e.sold);
+  const obs=allE.map(e=>e.stockout ? e.made * stockoutMul : e.sold);
   // Weighted average (index+1 = weight, so latest day weights highest)
   let wS=0,wT=0;
   obs.forEach((v,i)=>{const w=i+1;wS+=v*w;wT+=w;});
@@ -2641,8 +2748,15 @@ function dowDemand(itemId,dow){
   if(allDowE.length<2)return null;
   // Cap at last 12 occurrences of this weekday
   const dowE = allDowE.slice(-12);
-  // Stockout days get +15% uplift to estimate unmet demand
-  const obs = dowE.map(e=>e.stockout?e.made*1.15:e.sold);
+  // Stockout days: adaptive uplift based on overall recent stockout rate
+  // (uses item-level recentSoRate from the last 14 days of ALL weekdays —
+  // weekday-specific would be too sparse to estimate reliably).
+  const allRecent = L.flatMap(l=>l.entries.filter(e=>e.id===itemId)).slice(-14);
+  const recentSoRate = allRecent.length > 0
+    ? allRecent.filter(e=>e.stockout).length / allRecent.length
+    : 0;
+  const stockoutMul = 1.10 + 0.30 * Math.min(1, Math.max(0, recentSoRate));
+  const obs = dowE.map(e=>e.stockout ? e.made * stockoutMul : e.sold);
   // Linear weights: oldest=1, newest=N
   let wS=0,wT=0;
   obs.forEach((v,i)=>{const w=i+1;wS+=v*w;wT+=w;});
@@ -2944,11 +3058,49 @@ function itemSignal(itemId, dow){
       reason:`Avg ${avg10sold.toFixed(1)} units/day for 10 days. Very low demand.`};
   }
 
-  // Demand estimate (weekday-specific if available)
+  // Demand estimate (weekday-specific if available).
+  // Stockout days had unmet demand we can't see — apply adaptive inference:
+  // multiplier scales 1.10..1.40 with how often this item stocks out (Improvement A).
+  const recentSoRate = (() => {
+    const recent = allE.slice(-14);
+    if(!recent.length) return 0;
+    return recent.filter(e=>e.stockout).length / recent.length;
+  })();
+  const stockoutMul = 1.10 + 0.30 * Math.min(1, Math.max(0, recentSoRate));
+  const inferDemand = e => e.stockout ? (e.made||0) * stockoutMul : (e.sold||0);
   const dowE = allE.filter(e=>e.dow===dow);
   const demEst = dowE.length >= 2
-    ? dowE.reduce((s,e)=>s+e.sold,0)/dowE.length
-    : allE.reduce((s,e)=>s+e.sold,0)/allE.length;
+    ? dowE.reduce((s,e)=>s+inferDemand(e),0)/dowE.length
+    : allE.reduce((s,e)=>s+inferDemand(e),0)/allE.length;
+
+  // ── CONVERGENCE LOOP (Improvement B) ──
+  // Did our previous bumps actually close the supply gap?
+  // Compare last 7 days to prior 7 days:
+  //   - If last week was chronically stocking out (≥3 SO days), AND
+  //   - Production this week barely increased over last week,
+  // then our +25% (or whatever) hasn't been enough. Bump harder.
+  // Capped at adj=1.50 so the system doesn't spiral.
+  // Also catches the reverse: if we previously cut and the item now sells
+  // well with leftover, we don't pile on another cut.
+  // Implementation note: this is observational (B2) — we don't store past
+  // recommendations; we infer the production trajectory from actual `made`.
+  const prior7 = allE.slice(-14, -7);
+  const avgMadeLast7  = last7.length  > 0 ? last7.reduce((s,e)=>s+(e.made||0),0)/last7.length : 0;
+  const avgMadePrior7 = prior7.length > 0 ? prior7.reduce((s,e)=>s+(e.made||0),0)/prior7.length : 0;
+  const soPrior7 = prior7.filter(e=>e.stockout).length;
+  let convergenceBoost = 1.0, convergenceNote = '';
+  if(prior7.length >= 5){
+    const productionGrowth = avgMadePrior7 > 0
+      ? (avgMadeLast7 - avgMadePrior7) / avgMadePrior7
+      : 0;
+    const stillStockingOut = last7.filter(e=>e.stockout).length >= 3;
+    if(soPrior7 >= 3 && stillStockingOut && productionGrowth < 0.10){
+      // We had stockouts, we barely raised production, and we're STILL
+      // stocking out. Push harder.
+      convergenceBoost = 1.15;
+      convergenceNote = ' · convergence +15%';
+    }
+  }
 
   // Apply signal
   let adj=1.0, signal='', signalCls='', adjLabel='';
@@ -2975,8 +3127,20 @@ function itemSignal(itemId, dow){
     signal='✅ Stable'; signalCls='pg'; adj=1.00; adjLabel='Hold';
   }
 
+  // Apply convergence boost ONLY to upward adjustments. We don't want it
+  // to interfere with reduction signals — if the system is correctly cutting
+  // production for an over-producing item, we shouldn't override that.
+  const adjBeforeConv = adj;
+  if(adj > 1.0){
+    adj = Math.min(1.50, adj * convergenceBoost);
+  }
+  // Update label only when convergence actually changed the multiplier
+  if(adj !== adjBeforeConv){
+    adjLabel = (adj >= 1 ? '+' : '') + Math.round((adj - 1) * 100) + '%';
+  }
+
   const rec = Math.max(1, Math.ceil(demEst * adj));
-  const reason = `Sell rate ${Math.round(sellRate7*100)}% · SO ${Math.round(soRate7*100)}% · Adj ${adjLabel}`;
+  const reason = `Sell rate ${Math.round(sellRate7*100)}% · SO ${Math.round(soRate7*100)}% · Adj ${adjLabel}${convergenceNote && adj !== adjBeforeConv ? convergenceNote : ''}`;
 
   return {phase:'active', daysLogged, rec, signal, signalCls, adj, adjLabel, reason, demEst, sellRate7, soRate7};
 }
