@@ -112,6 +112,9 @@ input:focus,select:focus{outline:none;border-color:var(--am);background:#fff;}
 .btn{background:var(--am);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;transition:background .2s,transform .1s;white-space:nowrap;}
 .btn:hover{background:var(--ink);}
 .btn:active{transform:scale(.97);}
+.btn:disabled,.btn[disabled]{background:var(--bd);color:var(--mu);cursor:not-allowed;opacity:.7;}
+.btn:disabled:hover,.btn[disabled]:hover{background:var(--bd);}
+.btn:disabled:active,.btn[disabled]:active{transform:none;}
 .bto{background:transparent;color:var(--am);border:2px solid var(--am);}
 .bto:hover{background:var(--amb);}
 .btg{background:transparent;color:var(--mu);border:1.5px solid var(--bd);}
@@ -846,7 +849,7 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
     <div id="sumCarry" style="display:none;margin-top:12px;background:var(--blb);border:1px solid #b0c8f0;border-radius:8px;padding:10px 12px;font-size:.75rem;color:var(--bl);line-height:1.6;"></div>
     <!-- Compare to yesterday -->
     <div id="sumCompare" style="display:none;margin-top:10px;background:var(--s2);border-radius:8px;padding:10px 12px;font-size:.75rem;color:var(--ink2);line-height:1.6;"></div>
-    <button class="btn" onclick="closeSummary()" style="width:100%;margin-top:18px;">Done</button>
+    <button class="btn" onclick="closeSummary()" style="width:100%;margin-top:18px;">Confirm</button>
   </div>
 </div>
 
@@ -932,7 +935,7 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
       </div>
       <div style="display:flex;gap:8px;">
         <button class="btn btg" onclick="clearLogEntries()">Clear</button>
-        <button class="btn" onclick="saveDay()">💾 Save Day</button>
+        <button class="btn" id="saveDayBtn" onclick="saveDay()" disabled>💾 Save Day</button>
       </div>
     </div>
   </div>
@@ -2123,6 +2126,7 @@ function updateLiveSummary(){
   if(!ids.length){
     if(revEl) revEl.textContent = '';
     if(sumEl) sumEl.textContent = '';
+    updateSaveDayButton();
     return;
   }
 
@@ -2142,6 +2146,19 @@ function updateLiveSummary(){
   if(sumEl) sumEl.textContent = totalSold>0
     ? `${totalSold} units sold${totalMade>0?' · '+sr+'% sell rate':''}`
     : '';
+  updateSaveDayButton();
+}
+
+// Save Day button: disabled until the user has entered something worth saving.
+// "Soft" mode: auto-added carry-forward rows (made:0, sold:0, cf:N) DON'T count
+// — only typed values for made or sold do. This means after Save → Confirm,
+// the button stays disabled even though the form re-shows yesterday's leftovers,
+// until the user actually logs new production or sales.
+function updateSaveDayButton(){
+  const btn = document.getElementById('saveDayBtn');
+  if(!btn) return;
+  const hasRealData = Object.values(F).some(e => (e.made||0) > 0 || (e.sold||0) > 0);
+  btn.disabled = !hasRealData;
 }
 
 function saveDay(){
@@ -2962,7 +2979,31 @@ function renderHistory(){
     </tr>`;}).join('');
 }
 
-function delLog(d){if(!confirm('Delete log for '+d+'?'))return;S.logs=S.logs.filter(l=>l.date!==d);save();renderHistory();renderStats();}
+function delLog(d){
+  if(!confirm('Delete log for '+d+'?')) return;
+  S.logs = S.logs.filter(l => l.date !== d);
+  save();
+  renderHistory();
+  renderStats();
+  // Refresh the Log tab: the deleted log may have been
+  //   (a) the date currently displayed → form shows stale entries/revenue
+  //   (b) contributing carry-forward to a later date the user is viewing
+  // Either way, wipe F and re-run autoAddCarryForwards for the current date.
+  // Any in-progress typing is lost, but: the user just clicked Delete in
+  // History, so they weren't actively logging. Predictable beats clever here.
+  F = {};
+  const byId = id => document.getElementById(id);
+  if(byId('logTableBody')) byId('logTableBody').innerHTML = '';
+  if(byId('logTableFoot')) byId('logTableFoot').innerHTML = '';
+  if(byId('logTableWrap')) byId('logTableWrap').style.display = 'none';
+  if(byId('logEntries'))   byId('logEntries').innerHTML = '';
+  if(byId('live-rev'))     byId('live-rev').textContent = '';
+  if(byId('live-summary')) byId('live-summary').textContent = '';
+  clearDraft();
+  buildItemPicker();
+  updateCFBanner();
+  autoAddCarryForwards();
+}
 
 function exportData(){
   const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
