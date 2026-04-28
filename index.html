@@ -818,7 +818,7 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
       </div>
       <div>
         <label class="fl">Selling Price per Unit (₹)</label>
-        <input type="number" id="mprice" inputmode="decimal" min="0" step="0.5" placeholder="0" onfocus="this.select()">
+        <input type="number" id="mprice" min="0" step="0.5" value="0" placeholder="e.g. 45">
       </div>
     </div>
     <div class="mf">
@@ -1175,17 +1175,25 @@ async function load(){
       sbQ('bakeryiq_catalog?select=*&order=created_at.asc'),
       sbQ('bakeryiq_logs?select=id,log_date,day_of_week,bakeryiq_log_entries(item_id,made,sold,carry_in,stockout)&order=log_date.asc')
     ]), 10000); // 10 second timeout
-    const nm=settings.find(s=>s.key==='bakery_name');
-    if(nm) S.name=nm.value;
-    if(catalog.length) S.catalog=catalog.map(c=>({id:c.id,name:c.name,
-      shelfDays:c.shelf_days,price:parseFloat(c.price)||0,active:c.active}));
-    if(logs.length) S.logs=logs.map(l=>({date:l.log_date,dow:l.day_of_week,
-      entries:l.bakeryiq_log_entries.map(e=>({id:e.item_id,made:e.made,sold:e.sold,
-        carryIn:e.carry_in,stockout:e.stockout}))}));
-    // Empty DB is fine — just a fresh start
+
+    // Apply to in-memory S. Replace arrays unconditionally — including with
+    // empty arrays — so the local view always matches the server. (The old
+    // `if(catalog.length)` guards meant deleting the last item would silently
+    // be undone on next reload.)
+    const nm = (settings||[]).find(s=>s.key==='bakery_name');
+    if(nm) S.name = nm.value;
+    S.catalog = (catalog||[]).map(c=>({id:c.id, name:c.name,
+      shelfDays:c.shelf_days, price:parseFloat(c.price)||0, active:c.active}));
+    S.logs = (logs||[]).map(l=>({date:l.log_date, dow:l.day_of_week,
+      entries:(l.bakeryiq_log_entries||[]).map(e=>({id:e.item_id, made:e.made, sold:e.sold,
+        carryIn:e.carry_in, stockout:e.stockout}))}));
+
+    // Refresh the server snapshot so save() can compute correct diffs.
+    _snapshotFromDb(settings||[], catalog||[], logs||[]);
   }catch(e){
     console.error('DB load failed:',e.message);
-    // Keep whatever S has — don't overwrite with sample data
+    // Keep whatever S has — don't overwrite with sample data.
+    // Snapshot is also left as-is; save() will still try its best with stale info.
   }
 }
 // Save status: 'idle' | 'saving' | 'error'
@@ -1215,6 +1223,43 @@ function setSaveStatus(status, msg){
   }
 }
 
+// ════════════ SERVER SNAPSHOT ════════════
+// We track what we believe is currently on the server so save() can compute a
+// minimal diff (only POST/DELETE what actually changed). This eliminates:
+//   - the wasteful "rewrite all 19 catalog rows + last 200 logs every save"
+//   - the missing-DELETE bug (delLog removed local-only; never hit the DB)
+//   - the orphan-entries window during DELETE-then-INSERT entry replacement
+let _srvSettings = new Map();   // key -> value
+let _srvCatalog  = new Map();   // id  -> hash
+let _srvLogs     = new Map();   // log_date -> { id, entryHash }
+
+// Stable hash of an object. Order of properties doesn't matter to us because
+// we always build them in the same order, but JSON.stringify is good enough.
+function _hash(obj){ return JSON.stringify(obj); }
+
+function _catalogHash(c){
+  return _hash([c.name, c.shelfDays||1, +c.price||0, !!c.active]);
+}
+function _entriesHash(entries){
+  // Sort by item_id so order doesn't cause spurious diffs
+  const sorted = [...entries].sort((a,b)=>String(a.id).localeCompare(String(b.id)));
+  return _hash(sorted.map(e=>[e.id, e.made||0, e.sold||0, e.carryIn||0, !!e.stockout]));
+}
+
+// Populate snapshot from raw DB rows. Called from load() after rows are fetched.
+function _snapshotFromDb(settings, catalog, logs){
+  _srvSettings = new Map(settings.map(s=>[s.key, s.value]));
+  _srvCatalog = new Map(catalog.map(c=>[c.id, _catalogHash({
+    name:c.name, shelfDays:c.shelf_days, price:parseFloat(c.price)||0, active:c.active
+  })]));
+  _srvLogs = new Map(logs.map(l=>{
+    const entries = (l.bakeryiq_log_entries||[]).map(e=>({
+      id:e.item_id, made:e.made, sold:e.sold, carryIn:e.carry_in, stockout:e.stockout
+    }));
+    return [l.log_date, { id: l.id, entryHash: _entriesHash(entries) }];
+  }));
+}
+
 function save(){
   setSaveStatus('saving');
   saveAll()
@@ -1224,30 +1269,130 @@ function save(){
     })
     .catch(e=>{
       console.error('Save failed:', e.message);
+      // Constraint violation = bad data, retrying won't help. Stop and alert user.
+      // Postgres returns these in the error body; we look for the constraint names.
+      const msg = String(e.message||'');
+      const isConstraint = msg.includes('bakeryiq_log_entries_sold_lte_available')
+                        || msg.includes('bakeryiq_log_entries_made_nonneg')
+                        || msg.includes('bakeryiq_log_entries_sold_nonneg')
+                        || msg.includes('bakeryiq_log_entries_carry_in_nonneg');
+      if(isConstraint){
+        setSaveStatus('error');
+        if(_pendingRetry){ clearTimeout(_pendingRetry); _pendingRetry = null; }
+        alert('Save blocked: an entry has invalid numbers (sold > made + carry-in, or a negative value). Please review today\'s entries and fix the bad row.');
+        return;
+      }
       setSaveStatus('error');
-      // Auto-retry after 5 seconds
+      // Auto-retry after 5 seconds for transient errors (network, timeout, etc.)
       if(_pendingRetry) clearTimeout(_pendingRetry);
       _pendingRetry = setTimeout(()=>{ save(); }, 5000);
     });
   try{updateNav();}catch(e){}
 }
 
+// Diff-based save. Each step updates the server snapshot ONLY after the
+// network call succeeds, so a failure mid-save leaves the snapshot consistent
+// and the next save will re-attempt the failed steps.
 async function saveAll(){
-  await sbQ('bakeryiq_settings',{method:'POST',prefer:'resolution=merge-duplicates',
-    body:JSON.stringify({key:'bakery_name',value:S.name||'My Bakery'})});
-  await sbQ('bakeryiq_catalog',{method:'POST',prefer:'resolution=merge-duplicates',
-    body:JSON.stringify(S.catalog.map(c=>({id:c.id,name:c.name,
-      shelf_days:c.shelfDays||1,price:c.price||0,active:c.active})))});
+  // ── 1. SETTINGS ──
+  const desiredName = S.name || 'My Bakery';
+  if(_srvSettings.get('bakery_name') !== desiredName){
+    await sbQ('bakeryiq_settings', {method:'POST', prefer:'resolution=merge-duplicates',
+      body: JSON.stringify({key:'bakery_name', value: desiredName})});
+    _srvSettings.set('bakery_name', desiredName);
+  }
+
+  // ── 2. CATALOG ──
+  // 2a. Find changed/new rows (compare hashes)
+  const catalogToUpsert = S.catalog.filter(c => _srvCatalog.get(c.id) !== _catalogHash(c));
+  if(catalogToUpsert.length){
+    await sbQ('bakeryiq_catalog', {method:'POST', prefer:'resolution=merge-duplicates',
+      body: JSON.stringify(catalogToUpsert.map(c => ({
+        id: c.id, name: c.name, shelf_days: c.shelfDays||1,
+        price: c.price||0, active: c.active
+      })))});
+    catalogToUpsert.forEach(c => _srvCatalog.set(c.id, _catalogHash(c)));
+  }
+  // 2b. Find deleted rows (in server snapshot but not in S.catalog)
+  const localCatalogIds = new Set(S.catalog.map(c => c.id));
+  const catalogToDelete = [..._srvCatalog.keys()].filter(id => !localCatalogIds.has(id));
+  for(const id of catalogToDelete){
+    // Catalog rows have FK from log_entries.item_id. deleteItem() already
+    // strips affected log entries before save(), but if anything was missed,
+    // PostgreSQL will reject this with FK violation — that's correct.
+    await sbQ('bakeryiq_catalog?id=eq.'+encodeURIComponent(id), {method:'DELETE'});
+    _srvCatalog.delete(id);
+  }
+
+  // ── 3. LOGS ──
+  // 3a. DELETE logs that exist on server but not locally (FIXES delLog bug)
+  const localDates = new Set(S.logs.map(l => l.date));
+  const datesToDelete = [..._srvLogs.keys()].filter(d => !localDates.has(d));
+  for(const d of datesToDelete){
+    const meta = _srvLogs.get(d);
+    if(!meta) continue;
+    // Children first (FK), then the log row.
+    await sbQ('bakeryiq_log_entries?log_id=eq.'+meta.id, {method:'DELETE'});
+    await sbQ('bakeryiq_logs?id=eq.'+meta.id, {method:'DELETE'});
+    _srvLogs.delete(d);
+  }
+
+  // 3b. UPSERT new/changed logs and their entries
+  // Cap at last 200 logs to bound work, like the old code.
   for(const log of S.logs.slice(-200)){
-    const lr=await sbQ('bakeryiq_logs',{method:'POST',
-      prefer:'resolution=merge-duplicates,return=representation',
-      body:JSON.stringify({log_date:log.date,day_of_week:log.dow})});
-    const lid=Array.isArray(lr)?lr[0]?.id:lr?.id;
-    if(!lid) continue;
-    await sbQ('bakeryiq_log_entries?log_id=eq.'+lid,{method:'DELETE'});
-    if(log.entries.length) await sbQ('bakeryiq_log_entries',{method:'POST',
-      body:JSON.stringify(log.entries.map(e=>({log_id:lid,item_id:e.id,
-        made:e.made||0,sold:e.sold||0,carry_in:e.carryIn||0,stockout:e.stockout||false})))});
+    const desiredEntries = (log.entries||[]).map(e => ({
+      id: e.id, made: e.made||0, sold: e.sold||0, carryIn: e.carryIn||0, stockout: !!e.stockout
+    }));
+    const desiredEntryHash = _entriesHash(desiredEntries);
+    const srv = _srvLogs.get(log.date);
+
+    if(srv && srv.entryHash === desiredEntryHash){
+      // Nothing changed for this log — skip entirely.
+      continue;
+    }
+
+    let lid = srv?.id;
+    if(!lid){
+      // New log — upsert the row to get an id.
+      const lr = await sbQ('bakeryiq_logs', {method:'POST',
+        prefer:'resolution=merge-duplicates,return=representation',
+        body: JSON.stringify({log_date: log.date, day_of_week: log.dow})});
+      lid = Array.isArray(lr) ? lr[0]?.id : lr?.id;
+      if(!lid){
+        // PostgREST didn't return the row (rare — RLS or Prefer header issue).
+        // Fall back to a SELECT.
+        const got = await sbQ('bakeryiq_logs?select=id&log_date=eq.'+log.date);
+        lid = Array.isArray(got) ? got[0]?.id : null;
+      }
+      if(!lid) throw new Error('Could not resolve log id for '+log.date);
+    }
+
+    // Now sync entries. Old approach: DELETE all + INSERT all (orphan window).
+    // New approach: UPSERT desired rows on (log_id, item_id), then DELETE only
+    // the entries the user removed. No orphan window.
+    if(desiredEntries.length){
+      await sbQ('bakeryiq_log_entries', {method:'POST',
+        prefer:'resolution=merge-duplicates',
+        body: JSON.stringify(desiredEntries.map(e => ({
+          log_id: lid, item_id: e.id,
+          made: e.made, sold: e.sold, carry_in: e.carryIn, stockout: e.stockout
+        })))});
+    }
+
+    // Delete entries on server that the user removed locally.
+    // Identify them: anything currently on server (we don't track per-entry
+    // hashes, just the aggregate) and not in desiredEntries.
+    const desiredItemIds = desiredEntries.map(e => e.id);
+    if(desiredItemIds.length){
+      // Quote each id for the PostgREST `in` filter.
+      const inList = '(' + desiredItemIds.map(id => '"'+String(id).replace(/"/g,'""')+'"').join(',') + ')';
+      await sbQ('bakeryiq_log_entries?log_id=eq.'+lid+'&item_id=not.in.'+encodeURIComponent(inList), {method:'DELETE'});
+    } else {
+      // No entries desired for this log — clear them all.
+      await sbQ('bakeryiq_log_entries?log_id=eq.'+lid, {method:'DELETE'});
+    }
+
+    _srvLogs.set(log.date, { id: lid, entryHash: desiredEntryHash });
   }
 }
 function cat(id){return S.catalog.find(c=>c.id===id);}
@@ -1551,6 +1696,26 @@ function autoAddCarryForwards(){
   restoreDraft();
 }
 
+// Hard validation: matches DB CHECK constraints exactly.
+// Returns null if OK, else { error: string, clampSold?: number }.
+// All three values must be non-negative integers and sold <= made + carryIn.
+function validateEntryAmounts(made, sold, carryIn){
+  made    = +made    || 0;
+  sold    = +sold    || 0;
+  carryIn = +carryIn || 0;
+  if(made < 0 || sold < 0 || carryIn < 0){
+    return { error: 'Made, sold, and carry-in cannot be negative.' };
+  }
+  const available = made + carryIn;
+  if(sold > available){
+    return {
+      error: `Sold (${sold}) cannot exceed available (${available} = ${made} made + ${carryIn} carried in).`,
+      clampSold: available
+    };
+  }
+  return null;
+}
+
 // Returns a warning string if made/sold look abnormal vs recent history, else ''
 function checkOutlier(itemId, made, sold){
   const c = cat(itemId); if(!c) return '';
@@ -1579,13 +1744,19 @@ function addLogRow(){
   const sold  = Math.max(0, +(document.getElementById('addSold').value)||0);
   if(!id){ toast('Select an item first'); return; }
   if(F[id]){ toast('Already in table'); return; }
+  const dateStr = document.getElementById('logDate').value;
+  const cf = getCarryForward(id, dateStr);
+  // Hard validation — DB will reject these too
+  const v = validateEntryAmounts(made, sold, cf);
+  if(v){
+    alert(v.error);
+    return;
+  }
   // Outlier warning — catch typos like "500" instead of "50"
   const warning = checkOutlier(id, made, sold);
   if(warning && !confirm(warning + '\n\nContinue adding this entry?')){
     return;
   }
-  const dateStr = document.getElementById('logDate').value;
-  const cf = getCarryForward(id, dateStr);
   F[id] = {made, sold, cf};   // store cf too so user can edit it
   renderTableRow(id);
   persistDraft();
@@ -1676,6 +1847,15 @@ function updateEntry(itemId, key, val){
   const dateStr = document.getElementById('logDate').value;
   const cf = getCarryForward(itemId, dateStr);
   const e = F[itemId];
+  // Auto-clamp sold to (made + cf) if the edit puts us in an invalid state.
+  // Gentler than a hard alert; DB constraint is the safety net.
+  const available0 = cf + (e.made||0);
+  if((e.sold||0) > available0){
+    e.sold = available0;
+    const soldEl = document.getElementById('les-'+itemId);
+    if(soldEl) soldEl.value = available0;
+    toast('Sold capped at '+available0+' (cannot exceed made + carry-in)');
+  }
   const available = cf + (e.made||0);
   const sold = e.sold||0;
   const leftover = Math.max(0, available - sold);
@@ -1765,6 +1945,16 @@ function updateTableEntry(itemId, key, val){
   if(!F[itemId]) return;
   F[itemId][key] = val;
   const e = F[itemId];
+  // Auto-clamp sold to (made + cf) if the edit puts us in an invalid state.
+  // This is gentler than blocking edits: typical bakery workflow is "type made,
+  // then type sold" — we don't want a hard alert mid-edit. DB constraint is the safety net.
+  const available = (e.made||0) + (e.cf||0);
+  if((e.sold||0) > available){
+    e.sold = available;
+    const soldEl = document.getElementById('lts-'+itemId);
+    if(soldEl) soldEl.value = available;
+    toast('Sold capped at '+available+' (cannot exceed made + carry-in)');
+  }
   const total = (e.made||0) + (e.cf||0);
   const sold  = e.sold||0;
   const stockout = total > 0 && sold >= total;
