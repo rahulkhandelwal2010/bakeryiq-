@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -15,53 +16,53 @@
 @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap');
 
 :root{
-  --bg:#faf5ed;
-  --s:#ffffff;
-  --s2:#f4ebd9;
-  --s3:#ebdcbe;
-  --bd:#e4d3b8;
-  --ink:#2a1a08;
-  --ink2:#5c3517;
-  --mu:#8a6840;
-  --am:#c97626;
-  --aml:#d4862a;
-  --gr:#4a7c3a;
-  --grl:#5c9c48;
-  --re:#b84040;
-  --rel:#d85858;
-  --bl:#3d6fa8;
-  --bll:#5a8fd0;
+–bg:#faf5ed;
+–s:#ffffff;
+–s2:#f4ebd9;
+–s3:#ebdcbe;
+–bd:#e4d3b8;
+–ink:#2a1a08;
+–ink2:#5c3517;
+–mu:#8a6840;
+–am:#c97626;
+–aml:#d4862a;
+–gr:#4a7c3a;
+–grl:#5c9c48;
+–re:#b84040;
+–rel:#d85858;
+–bl:#3d6fa8;
+–bll:#5a8fd0;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 html{font-size:13px;}
 
 /* ── iOS PWA status bar bleed ── */
-/* Covers the notch/status bar area with the nav's background colour */
+/* Covers the notch/status bar area with the nav’s background colour */
 html {
-  background: var(--ink);  /* same as nav, so status bar area matches */
+background: var(–ink);  /* same as nav, so status bar area matches */
 }
 @supports (padding: max(0px)) {
-  body {
-    padding-top: max(env(safe-area-inset-top), 0px);
-    padding-left: max(env(safe-area-inset-left), 0px);
-    padding-right: max(env(safe-area-inset-right), 0px);
-  }
+body {
+padding-top: max(env(safe-area-inset-top), 0px);
+padding-left: max(env(safe-area-inset-left), 0px);
+padding-right: max(env(safe-area-inset-right), 0px);
+}
 }
 
-body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--ink);min-height:100vh;
-  padding-top:env(safe-area-inset-top,0);
-  padding-left:env(safe-area-inset-left,0);
-  padding-right:env(safe-area-inset-right,0);}
+body{background:var(–bg);font-family:‘DM Sans’,sans-serif;color:var(–ink);min-height:100vh;
+padding-top:env(safe-area-inset-top,0);
+padding-left:env(safe-area-inset-left,0);
+padding-right:env(safe-area-inset-right,0);}
 
 /* NAV */
-.nav{background:var(--ink);display:flex;align-items:stretch;padding-left:18px;padding-top:env(safe-area-inset-top,0);position:sticky;top:0;z-index:300;box-shadow:0 2px 18px rgba(0,0,0,.4);}
-.brand{font-family:'Libre Baskerville',serif;font-size:1.2rem;font-weight:700;color:var(--aml);display:flex;align-items:center;gap:8px;padding:0 16px 0 0;border-right:1px solid #3a2510;margin-right:2px;white-space:nowrap;}
-.brand small{font-family:'DM Sans',sans-serif;font-size:.6rem;font-weight:400;color:#7a5530;letter-spacing:.5px;}
+.nav{background:var(–ink);display:flex;align-items:stretch;padding-left:18px;padding-top:env(safe-area-inset-top,0);position:sticky;top:0;z-index:300;box-shadow:0 2px 18px rgba(0,0,0,.4);}
+.brand{font-family:‘Libre Baskerville’,serif;font-size:1.2rem;font-weight:700;color:var(–aml);display:flex;align-items:center;gap:8px;padding:0 16px 0 0;border-right:1px solid #3a2510;margin-right:2px;white-space:nowrap;}
+.brand small{font-family:‘DM Sans’,sans-serif;font-size:.6rem;font-weight:400;color:#7a5530;letter-spacing:.5px;}
 .tab{padding:0 12px;font-size:.69rem;font-weight:700;color:#7a5530;cursor:pointer;transition:color .15s;border-bottom:3px solid transparent;white-space:nowrap;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;}
-.tab:hover{color:var(--aml);}
-.tab.active{color:var(--aml);border-bottom-color:var(--am);}
+.tab:hover{color:var(–aml);}
+.tab.active{color:var(–aml);border-bottom-color:var(–am);}
 .nav-r{margin-left:auto;padding:0 14px;display:flex;gap:8px;align-items:center;}
-.nbadge{background:#321a08;color:var(--aml);font-size:.62rem;font-weight:700;padding:3px 9px;border-radius:20px;}
+.nbadge{background:#321a08;color:var(–aml);font-size:.62rem;font-weight:700;padding:3px 9px;border-radius:20px;}
 
 /* PAGES */
 .page{display:none;padding:20px 18px 80px;max-width:1120px;margin:0 auto;animation:fi .18s ease;}
@@ -69,77 +70,77 @@ body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--ink);min-
 @keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 
 /* CARDS */
-.card{background:var(--s);border-radius:14px;padding:18px;box-shadow:var(--sh);border:1px solid var(--bd);margin-bottom:16px;}
-.ct{font-family:'Libre Baskerville',serif;font-size:.98rem;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-.cs{font-size:.73rem;color:var(--mu);margin-bottom:12px;line-height:1.6;}
+.card{background:var(–s);border-radius:14px;padding:18px;box-shadow:var(–sh);border:1px solid var(–bd);margin-bottom:16px;}
+.ct{font-family:‘Libre Baskerville’,serif;font-size:.98rem;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.cs{font-size:.73rem;color:var(–mu);margin-bottom:12px;line-height:1.6;}
 
 /* STATS */
 .sr{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px;}
-.st{background:var(--s);border-radius:11px;padding:13px 10px;box-shadow:var(--sh);border:1px solid var(--bd);text-align:center;}
-.sn{font-family:'Libre Baskerville',serif;font-size:1.7rem;font-weight:700;color:var(--am);line-height:1;}
-.sl{font-size:.6rem;font-weight:700;color:var(--mu);margin-top:3px;text-transform:uppercase;letter-spacing:.5px;}
+.st{background:var(–s);border-radius:11px;padding:13px 10px;box-shadow:var(–sh);border:1px solid var(–bd);text-align:center;}
+.sn{font-family:‘Libre Baskerville’,serif;font-size:1.7rem;font-weight:700;color:var(–am);line-height:1;}
+.sl{font-size:.6rem;font-weight:700;color:var(–mu);margin-top:3px;text-transform:uppercase;letter-spacing:.5px;}
 
 /* FORMS */
-.fl{font-size:.66rem;font-weight:700;color:var(--mu);display:block;margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px;}
+.fl{font-size:.66rem;font-weight:700;color:var(–mu);display:block;margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px;}
 input[type=text],input[type=number],input[type=date],select{
-  border:1.5px solid var(--bd);border-radius:7px;padding:6px 9px;
-  font-family:'DM Sans',sans-serif;font-size:.81rem;color:var(--ink);
-  background:var(--s2);width:100%;transition:border .2s,background .2s;
-  box-sizing:border-box;max-width:100%;
+border:1.5px solid var(–bd);border-radius:7px;padding:6px 9px;
+font-family:‘DM Sans’,sans-serif;font-size:.81rem;color:var(–ink);
+background:var(–s2);width:100%;transition:border .2s,background .2s;
+box-sizing:border-box;max-width:100%;
 }
 
 /* iOS date input fix — force left-align, reset native appearance quirks */
 input[type=date]{
-  -webkit-appearance:none;
-  appearance:none;
-  min-height:38px;
-  text-align:left;
-  display:block;
+-webkit-appearance:none;
+appearance:none;
+min-height:38px;
+text-align:left;
+display:block;
 }
 input[type=date]::-webkit-date-and-time-value{
-  text-align:left;
-  margin:0;
-  padding:0;
+text-align:left;
+margin:0;
+padding:0;
 }
 input[type=date]::-webkit-calendar-picker-indicator{
-  margin-left:auto;
+margin-left:auto;
 }
-input:focus,select:focus{outline:none;border-color:var(--am);background:#fff;}
+input:focus,select:focus{outline:none;border-color:var(–am);background:#fff;}
 .fr{display:flex;gap:9px;align-items:flex-end;flex-wrap:wrap;}
 .fi{flex:1;min-width:80px;}
 
 /* BUTTONS */
-.btn{background:var(--am);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;transition:background .2s,transform .1s;white-space:nowrap;}
-.btn:hover{background:var(--ink);}
+.btn{background:var(–am);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-family:‘DM Sans’,sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;transition:background .2s,transform .1s;white-space:nowrap;}
+.btn:hover{background:var(–ink);}
 .btn:active{transform:scale(.97);}
-.btn:disabled,.btn[disabled]{background:var(--bd);color:var(--mu);cursor:not-allowed;opacity:.7;}
-.btn:disabled:hover,.btn[disabled]:hover{background:var(--bd);}
+.btn:disabled,.btn[disabled]{background:var(–bd);color:var(–mu);cursor:not-allowed;opacity:.7;}
+.btn:disabled:hover,.btn[disabled]:hover{background:var(–bd);}
 .btn:disabled:active,.btn[disabled]:active{transform:none;}
-.bto{background:transparent;color:var(--am);border:2px solid var(--am);}
-.bto:hover{background:var(--amb);}
-.btg{background:transparent;color:var(--mu);border:1.5px solid var(--bd);}
-.btg:hover{background:var(--s3);}
-.bdel{background:transparent;color:var(--re);border:1.5px solid #e0b0b0;font-size:.68rem;padding:3px 7px;border-radius:5px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;}
-.bdel:hover{background:var(--reb);}
+.bto{background:transparent;color:var(–am);border:2px solid var(–am);}
+.bto:hover{background:var(–amb);}
+.btg{background:transparent;color:var(–mu);border:1.5px solid var(–bd);}
+.btg:hover{background:var(–s3);}
+.bdel{background:transparent;color:var(–re);border:1.5px solid #e0b0b0;font-size:.68rem;padding:3px 7px;border-radius:5px;cursor:pointer;font-family:‘DM Sans’,sans-serif;font-weight:700;}
+.bdel:hover{background:var(–reb);}
 .bwrap{display:flex;justify-content:flex-end;gap:7px;margin-top:12px;}
 
 /* TABLES */
 .tw{overflow-x:auto;}
 table{width:100%;border-collapse:collapse;font-size:.78rem;}
-thead th{font-size:.62rem;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--mu);padding:7px 8px;text-align:left;border-bottom:2px solid var(--bd);}
-tbody td{padding:8px 8px;border-bottom:1px solid var(--s2);vertical-align:middle;}
+thead th{font-size:.62rem;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(–mu);padding:7px 8px;text-align:left;border-bottom:2px solid var(–bd);}
+tbody td{padding:8px 8px;border-bottom:1px solid var(–s2);vertical-align:middle;}
 tbody tr:last-child td{border-bottom:none;}
-tbody tr:hover td{background:var(--s2);}
+tbody tr:hover td{background:var(–s2);}
 td input[type=number]{width:64px;padding:4px 6px;font-size:.77rem;}
 td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
 
 /* PILLS */
 .p{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.65rem;font-weight:700;}
-.pg{background:var(--grb);color:var(--gr);}
-.pa{background:var(--amb);color:var(--am);}
-.pr{background:var(--reb);color:var(--re);}
-.pb{background:var(--blb);color:var(--bl);}
-.po{background:var(--orb);color:var(--or);}
+.pg{background:var(–grb);color:var(–gr);}
+.pa{background:var(–amb);color:var(–am);}
+.pr{background:var(–reb);color:var(–re);}
+.pb{background:var(–blb);color:var(–bl);}
+.po{background:var(–orb);color:var(–or);}
 
 /* TYPE TAGS */
 .tf{background:#fff7e4;color:#8a3a00;border:1px solid #f0d090;font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:4px;}
@@ -147,15 +148,15 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
 .tr2{background:#e6fff0;color:#1a5a2a;border:1px solid #90d0a0;font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:4px;}
 
 /* TREND */
-.tu{color:var(--gr);font-weight:700;}
-.td2{color:var(--re);font-weight:700;}
-.ts{color:var(--mu);font-weight:600;}
-.tn{color:var(--bl);font-weight:600;}
+.tu{color:var(–gr);font-weight:700;}
+.td2{color:var(–re);font-weight:700;}
+.ts{color:var(–mu);font-weight:600;}
+.tn{color:var(–bl);font-weight:600;}
 
 /* BARS */
 .br{display:flex;align-items:center;gap:9px;margin-bottom:7px;}
-.bl2{width:110px;font-size:.7rem;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;flex-shrink:0;}
-.bt{flex:1;background:var(--s3);border-radius:4px;height:16px;overflow:hidden;}
+.bl2{width:110px;font-size:.7rem;color:var(–ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;flex-shrink:0;}
+.bt{flex:1;background:var(–s3);border-radius:4px;height:16px;overflow:hidden;}
 .bf{height:16px;border-radius:4px;transition:width .5s ease;min-width:2px;}
 .bv{font-size:.7rem;font-weight:700;min-width:44px;}
 
@@ -164,44 +165,44 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
 .dc{text-align:center;}
 .dbw{height:70px;display:flex;align-items:flex-end;justify-content:center;margin-bottom:3px;}
 .db{width:100%;border-radius:3px 3px 0 0;min-height:3px;}
-.dl{font-size:.6rem;font-weight:700;color:var(--mu);text-transform:uppercase;}
+.dl{font-size:.6rem;font-weight:700;color:var(–mu);text-transform:uppercase;}
 .dv{font-size:.66rem;font-weight:700;margin-top:2px;}
 
 /* INSIGHT CARDS */
 .ig{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
 .ic{border-radius:10px;padding:12px 14px;border-left:4px solid;}
 .ic h4{font-size:.76rem;font-weight:700;margin-bottom:4px;}
-.ic p{font-size:.72rem;line-height:1.6;color:var(--ink2);}
-.ic.good{border-color:var(--gr);background:var(--grb);}
-.ic.good h4{color:var(--gr);}
-.ic.warn{border-color:var(--am);background:var(--amb);}
-.ic.warn h4{color:var(--am);}
-.ic.bad{border-color:var(--re);background:var(--reb);}
-.ic.bad h4{color:var(--re);}
-.ic.info{border-color:var(--bl);background:var(--blb);}
-.ic.info h4{color:var(--bl);}
+.ic p{font-size:.72rem;line-height:1.6;color:var(–ink2);}
+.ic.good{border-color:var(–gr);background:var(–grb);}
+.ic.good h4{color:var(–gr);}
+.ic.warn{border-color:var(–am);background:var(–amb);}
+.ic.warn h4{color:var(–am);}
+.ic.bad{border-color:var(–re);background:var(–reb);}
+.ic.bad h4{color:var(–re);}
+.ic.info{border-color:var(–bl);background:var(–blb);}
+.ic.info h4{color:var(–bl);}
 
 /* WEEKLY GRID */
 
 /* MODAL */
 .mb{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:none;align-items:flex-end;justify-content:center;padding:0;}
 .mb.open{display:flex;}
-.mo{background:var(--s);border-radius:18px 18px 0 0;padding:20px 18px 32px;max-width:520px;width:100%;box-shadow:var(--sh2);animation:slideup .22s ease;} @keyframes slideup{from{transform:translateY(100%)}to{transform:none}}
-.mo h3{font-family:'Libre Baskerville',serif;font-size:1rem;font-weight:700;margin-bottom:14px;}
+.mo{background:var(–s);border-radius:18px 18px 0 0;padding:20px 18px 32px;max-width:520px;width:100%;box-shadow:var(–sh2);animation:slideup .22s ease;} @keyframes slideup{from{transform:translateY(100%)}to{transform:none}}
+.mo h3{font-family:‘Libre Baskerville’,serif;font-size:1rem;font-weight:700;margin-bottom:14px;}
 .mf{display:flex;justify-content:flex-end;gap:7px;margin-top:16px;}
 
 /* CONF */
 .cf{display:inline-block;padding:2px 7px;border-radius:3px;font-size:.63rem;font-weight:700;}
-.cfh{background:var(--grb);color:var(--gr);}
-.cfm{background:var(--amb);color:var(--am);}
-.cfl{background:var(--reb);color:var(--re);}
+.cfh{background:var(–grb);color:var(–gr);}
+.cfm{background:var(–amb);color:var(–am);}
+.cfl{background:var(–reb);color:var(–re);}
 
 /* CHIP */
 .cw{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;}
-.ch{background:var(--amb);border:1.5px solid var(--bd);color:var(--ink);border-radius:20px;padding:4px 11px;font-size:.74rem;font-weight:600;display:flex;align-items:center;gap:5px;}
+.ch{background:var(–amb);border:1.5px solid var(–bd);color:var(–ink);border-radius:20px;padding:4px 11px;font-size:.74rem;font-weight:600;display:flex;align-items:center;gap:5px;}
 
 /* EMPTY */
-.empty{text-align:center;padding:40px 16px;color:var(--mu);}
+.empty{text-align:center;padding:40px 16px;color:var(–mu);}
 .empty .ico{font-size:2.6rem;margin-bottom:10px;}
 .empty p{font-size:.82rem;line-height:1.7;max-width:280px;margin:0 auto;}
 
@@ -210,216 +211,213 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
 .search-bar input{max-width:220px;padding:6px 10px;font-size:.78rem;}
 
 /* TOAST */
-#toast{position:fixed;bottom:22px;right:22px;background:var(--gr);color:#fff;border-radius:9px;padding:9px 16px;font-size:.8rem;font-weight:700;box-shadow:var(--sh2);z-index:999;display:none;animation:su .25s ease;}
+#toast{position:fixed;bottom:22px;right:22px;background:var(–gr);color:#fff;border-radius:9px;padding:9px 16px;font-size:.8rem;font-weight:700;box-shadow:var(–sh2);z-index:999;display:none;animation:su .25s ease;}
 @keyframes su{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
 
 .two{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-.mu2{font-size:.73rem;color:var(--mu);}
-.sep{height:1px;background:var(--bd);margin:14px 0;}
-.big-n{font-family:'Libre Baskerville',serif;font-size:2rem;font-weight:700;}
-.rec-n{font-family:'Libre Baskerville',serif;font-size:1.4rem;font-weight:700;}
+.mu2{font-size:.73rem;color:var(–mu);}
+.sep{height:1px;background:var(–bd);margin:14px 0;}
+.big-n{font-family:‘Libre Baskerville’,serif;font-size:2rem;font-weight:700;}
+.rec-n{font-family:‘Libre Baskerville’,serif;font-size:1.4rem;font-weight:700;}
 
 /* log-scroll no longer used */
 
 @media(max-width:700px){
-  .sr{grid-template-columns:repeat(3,1fr);}
-  .two{grid-template-columns:1fr;}
-  .ig{grid-template-columns:1fr;}
-  .tab{padding:0 8px;font-size:.62rem;}
+.sr{grid-template-columns:repeat(3,1fr);}
+.two{grid-template-columns:1fr;}
+.ig{grid-template-columns:1fr;}
+.tab{padding:0 8px;font-size:.62rem;}
 }
 
 /* ── BOTTOM NAV (mobile only) ── */
 .botnav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:300;min-height:56px;
-  background:var(--ink);border-top:1px solid #3a2510;height:58px;
-  box-shadow:0 -2px 12px rgba(0,0,0,.3);}
+background:var(–ink);border-top:1px solid #3a2510;height:58px;
+box-shadow:0 -2px 12px rgba(0,0,0,.3);}
 .botnav-inner{display:grid;grid-template-columns:repeat(5,1fr);height:100%;}
 .bnav{display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:2px;cursor:pointer;padding:4px 2px;border:none;background:transparent;
-  -webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+gap:2px;cursor:pointer;padding:4px 2px;border:none;background:transparent;
+-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
 .bnav .ico{font-size:1.2rem;line-height:1;}
 .bnav .lbl{font-size:.52rem;font-weight:700;color:#6a4a28;text-transform:uppercase;letter-spacing:.2px;}
-.bnav.active .lbl{color:var(--aml);}
+.bnav.active .lbl{color:var(–aml);}
 
 /* ── LOG ITEM CARDS (replace table on mobile) ── */
-.log-card{background:var(--s2);border:1.5px solid var(--bd);border-radius:12px;
-  padding:12px 12px 9px;display:none;}
+.log-card{background:var(–s2);border:1.5px solid var(–bd);border-radius:12px;
+padding:12px 12px 9px;display:none;}
 .lc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;gap:6px;}
 .lc-name{font-weight:700;font-size:.95rem;flex:1;}
 .lc-tags{display:flex;gap:5px;flex-shrink:0;}
 .lc-inputs{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.lc-field label{font-size:.63rem;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:3px;}
+.lc-field label{font-size:.63rem;font-weight:700;color:var(–mu);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:3px;}
 .lc-field input{font-size:1.2rem;font-weight:700;padding:10px;text-align:center;
-  border:1.5px solid var(--bd);border-radius:8px;background:var(--s);width:100%;
-  -webkit-appearance:none;appearance:none;}
-.lc-field input:focus{outline:none;border-color:var(--am);background:#fff;
-  box-shadow:0 0 0 3px rgba(184,96,10,.12);}
+border:1.5px solid var(–bd);border-radius:8px;background:var(–s);width:100%;
+-webkit-appearance:none;appearance:none;}
+.lc-field input:focus{outline:none;border-color:var(–am);background:#fff;
+box-shadow:0 0 0 3px rgba(184,96,10,.12);}
 .lc-foot{display:flex;justify-content:space-between;align-items:center;
-  margin-top:9px;padding-top:8px;border-top:1px solid var(--bd);}
+margin-top:9px;padding-top:8px;border-top:1px solid var(–bd);}
 .lc-result{font-size:.78rem;font-weight:700;min-width:80px;}
 .so-btn{display:flex;align-items:center;gap:5px;cursor:pointer;
-  padding:9px 13px;border-radius:9px;border:1.5px solid var(--bd);
-  background:var(--s);font-size:.82rem;font-weight:700;color:var(--mu);
-  transition:all .12s;-webkit-tap-highlight-color:transparent;user-select:none;}
-.so-btn.on{border-color:var(--re);background:var(--reb);color:var(--re);}
+padding:9px 13px;border-radius:9px;border:1.5px solid var(–bd);
+background:var(–s);font-size:.82rem;font-weight:700;color:var(–mu);
+transition:all .12s;-webkit-tap-highlight-color:transparent;user-select:none;}
+.so-btn.on{border-color:var(–re);background:var(–reb);color:var(–re);}
 
 /* ── MOBILE BREAKPOINT ── */
 @media(max-width:640px){
-  /* ── Base ── */
-  html{font-size:15px;}
-  body{padding-bottom:72px;}
-  .nav{display:none;}
-  .botnav{display:block;}
-  .page{padding:10px 10px 80px;}
-  .card{padding:14px 12px;border-radius:12px;margin-bottom:12px;}
+/* ── Base ── */
+html{font-size:15px;}
+body{padding-bottom:72px;}
+.nav{display:none;}
+.botnav{display:block;}
+.page{padding:10px 10px 80px;}
+.card{padding:14px 12px;border-radius:12px;margin-bottom:12px;}
 
-  /* ── Stat row: 3 cols on mobile ── */
-  .sr{grid-template-columns:repeat(3,1fr);gap:6px;}
-  .st{padding:10px 6px;}
-  .sn{font-size:1.1rem;}
-  .sl{font-size:.6rem;}
+/* ── Stat row: 3 cols on mobile ── */
+.sr{grid-template-columns:repeat(3,1fr);gap:6px;}
+.st{padding:10px 6px;}
+.sn{font-size:1.1rem;}
+.sl{font-size:.6rem;}
 
-  /* ── Two-col grids go single col ── */
-  .two{grid-template-columns:1fr;}
-  .ig{grid-template-columns:1fr;}
+/* ── Two-col grids go single col ── */
+.two{grid-template-columns:1fr;}
+.ig{grid-template-columns:1fr;}
 
-  /* ── Forms & inputs ── */
-  input[type=text],input[type=number],input[type=date],select{
-    padding:12px 12px;font-size:1rem;width:100%;border-radius:9px;
-    box-sizing:border-box;max-width:100%;
-  }
-  .btn{padding:13px 18px;font-size:.82rem;border-radius:9px;}
-  .fl{font-size:.72rem;}
-
-  /* ── Log form: stack vertically on mobile ── */
-  .log-form-row{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
-  .log-form-row .fi{width:100%;max-width:100% !important;}
-  .log-form-row select{width:100%;}
-  .log-form-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-  .log-form-btns .btn{width:100%;}
-
-  /* ── Log entry rows ── */
-  .log-entry{
-    display:flex;flex-direction:column;gap:8px;
-    padding:12px;border-radius:12px;
-  }
-  .le-name-row{display:flex;justify-content:space-between;align-items:center;}
-  .le-name{font-size:.9rem;}
-  .le-fields-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-  .le-field{min-width:unset;width:100%;}
-  .le-field input{width:100%;font-size:1.1rem;padding:10px 8px;}
-  .le-info{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
-
-  /* ── Tables: hide on mobile, shown as cards ── */
-  .tw{overflow-x:auto;-webkit-overflow-scrolling:touch;}
-  .tw table{min-width:520px;}
-
-  /* ── Day summary modal ── */
-  .mo{padding:18px 14px 24px;margin:12px;border-radius:16px;}
-
-  /* ── Revenue charts ── */
-  #rev-weekly-chart > div,
-  #rev-monthly-chart > div{min-width:44px;}
-
-  /* ── Weekly plan grid ── */
-
-  /* ── Toast ── */
-  #toast{bottom:76px;left:50%;transform:translateX(-50%);
-    border-radius:22px;padding:10px 20px;white-space:nowrap;font-size:.82rem;}
-
-  /* ── Bottom nav bigger touch targets ── */
-  .bnav{font-size:.58rem;}
-  .bnav .ico{font-size:1.2rem;}
-
-  /* ── Section titles ── */
-  .ct{font-size:.9rem;}
-  .cs{font-size:.78rem;}
-
-  /* ── Insight cards ── */
-  .ic{padding:12px;}
-  .ic h4{font-size:.8rem;}
-  .ic p{font-size:.72rem;}
-
-  /* ── Bar charts ── */
-  .br{gap:4px;}
-  .bl2{width:70px;font-size:.7rem;}
-
-  /* ── Plan table ── */
-  .rec-n{font-size:1.2rem;}
-
-  /* ── Misc ── */
-  .bl2{width:72px;}
-  h4{font-size:.85rem;}
+/* ── Forms & inputs ── */
+input[type=text],input[type=number],input[type=date],select{
+padding:12px 12px;font-size:1rem;width:100%;border-radius:9px;
+box-sizing:border-box;max-width:100%;
 }
+.btn{padding:13px 18px;font-size:.82rem;border-radius:9px;}
+.fl{font-size:.72rem;}
 
+/* ── Log form: stack vertically on mobile ── */
+.log-form-row{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+.log-form-row .fi{width:100%;max-width:100% !important;}
+.log-form-row select{width:100%;}
+.log-form-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.log-form-btns .btn{width:100%;}
+
+/* ── Log entry rows ── */
+.log-entry{
+display:flex;flex-direction:column;gap:8px;
+padding:12px;border-radius:12px;
+}
+.le-name-row{display:flex;justify-content:space-between;align-items:center;}
+.le-name{font-size:.9rem;}
+.le-fields-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.le-field{min-width:unset;width:100%;}
+.le-field input{width:100%;font-size:1.1rem;padding:10px 8px;}
+.le-info{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+
+/* ── Tables: hide on mobile, shown as cards ── */
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.tw table{min-width:520px;}
+
+/* ── Day summary modal ── */
+.mo{padding:18px 14px 24px;margin:12px;border-radius:16px;}
+
+/* ── Revenue charts ── */
+#rev-weekly-chart > div,
+#rev-monthly-chart > div{min-width:44px;}
+
+/* ── Weekly plan grid ── */
+
+/* ── Toast ── */
+#toast{bottom:76px;left:50%;transform:translateX(-50%);
+border-radius:22px;padding:10px 20px;white-space:nowrap;font-size:.82rem;}
+
+/* ── Bottom nav bigger touch targets ── */
+.bnav{font-size:.58rem;}
+.bnav .ico{font-size:1.2rem;}
+
+/* ── Section titles ── */
+.ct{font-size:.9rem;}
+.cs{font-size:.78rem;}
+
+/* ── Insight cards ── */
+.ic{padding:12px;}
+.ic h4{font-size:.8rem;}
+.ic p{font-size:.72rem;}
+
+/* ── Bar charts ── */
+.br{gap:4px;}
+.bl2{width:70px;font-size:.7rem;}
+
+/* ── Plan table ── */
+.rec-n{font-size:1.2rem;}
+
+/* ── Misc ── */
+.bl2{width:72px;}
+h4{font-size:.85rem;}
+}
 
 /* ── NEW LOG ENTRY ROWS ── */
 
 /* ── Inline Log Entry (new design) ── */
 .log-entry{
-  background:var(--s2);
-  border:1.5px solid var(--bd);
-  border-radius:12px;
-  margin-bottom:10px;
-  overflow:hidden;
-  transition:border-color .2s;
+background:var(–s2);
+border:1.5px solid var(–bd);
+border-radius:12px;
+margin-bottom:10px;
+overflow:hidden;
+transition:border-color .2s;
 }
-.log-entry.has-cf{border-color:#b0c8f0;background:var(--blb);}
+.log-entry.has-cf{border-color:#b0c8f0;background:var(–blb);}
 
 /* Name row */
 .le-header{
-  display:flex;justify-content:space-between;align-items:center;
-  padding:11px 14px 0;
+display:flex;justify-content:space-between;align-items:center;
+padding:11px 14px 0;
 }
 .le-name{font-weight:700;font-size:.88rem;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-.le-del{background:none;border:none;color:var(--mu);cursor:pointer;
-  font-size:.9rem;padding:4px 6px;border-radius:6px;line-height:1;
-  -webkit-tap-highlight-color:transparent;}
-.le-del:active{background:var(--reb);color:var(--re);}
+.le-del{background:none;border:none;color:var(–mu);cursor:pointer;
+font-size:.9rem;padding:4px 6px;border-radius:6px;line-height:1;
+-webkit-tap-highlight-color:transparent;}
+.le-del:active{background:var(–reb);color:var(–re);}
 
 /* Input row */
 .le-inputs{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-  padding:10px 14px;
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+padding:10px 14px;
 }
 .le-input-group{display:flex;flex-direction:column;gap:4px;}
 .le-input-label{
-  font-size:.62rem;font-weight:700;color:var(--mu);
-  text-transform:uppercase;letter-spacing:.4px;
+font-size:.62rem;font-weight:700;color:var(–mu);
+text-transform:uppercase;letter-spacing:.4px;
 }
 .le-input-field{
-  font-size:1.4rem;font-weight:700;text-align:center;
-  padding:10px 8px;border:1.5px solid var(--bd);border-radius:9px;
-  background:var(--s);width:100%;color:var(--ink);
-  -webkit-appearance:none;appearance:none;
+font-size:1.4rem;font-weight:700;text-align:center;
+padding:10px 8px;border:1.5px solid var(–bd);border-radius:9px;
+background:var(–s);width:100%;color:var(–ink);
+-webkit-appearance:none;appearance:none;
 }
 .le-input-field:focus{
-  outline:none;border-color:var(--am);
-  box-shadow:0 0 0 3px rgba(184,96,10,.12);
+outline:none;border-color:var(–am);
+box-shadow:0 0 0 3px rgba(184,96,10,.12);
 }
 
 /* Result row */
 .le-result-row{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:8px 14px 11px;
-  border-top:1px solid var(--bd);
-  background:var(--s);
-  flex-wrap:wrap;gap:6px;
+display:flex;align-items:center;justify-content:space-between;
+padding:8px 14px 11px;
+border-top:1px solid var(–bd);
+background:var(–s);
+flex-wrap:wrap;gap:6px;
 }
-.le-cf-tag{font-size:.68rem;color:var(--bl);font-weight:600;
-  background:var(--blb);padding:2px 8px;border-radius:10px;}
+.le-cf-tag{font-size:.68rem;color:var(–bl);font-weight:600;
+background:var(–blb);padding:2px 8px;border-radius:10px;}
 .le-result{font-size:.78rem;font-weight:700;}
-.le-rev-tag{font-size:.75rem;font-weight:700;color:var(--gr);}
-.le-stockout{font-size:.65rem;color:var(--re);font-weight:700;
-  background:var(--reb);padding:2px 8px;border-radius:10px;}
-
-
+.le-rev-tag{font-size:.75rem;font-weight:700;color:var(–gr);}
+.le-stockout{font-size:.65rem;color:var(–re);font-weight:700;
+background:var(–reb);padding:2px 8px;border-radius:10px;}
 
 /* ── PIN SCREEN ── */
 #pinScreen{position:fixed;inset:0;z-index:10000;background:linear-gradient(160deg,#faf5ed 0%,#f1e7d4 100%);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
-  padding:max(20px,env(safe-area-inset-top)) 20px max(20px,env(safe-area-inset-bottom));}
+display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
+padding:max(20px,env(safe-area-inset-top)) 20px max(20px,env(safe-area-inset-bottom));}
 .pin-logo{font-family:Georgia,serif;font-size:2rem;font-weight:700;color:#5c3517;margin-bottom:4px;}
 .pin-sub{font-size:.72rem;color:#8a6840;margin-bottom:32px;letter-spacing:3px;text-transform:uppercase;}
 .pin-label{font-size:.72rem;font-weight:600;color:#6b4a2a;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;}
@@ -430,275 +428,268 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
 .pin-error{color:#9d2c2c;font-size:.75rem;font-weight:600;min-height:22px;margin-bottom:16px;text-align:center;}
 .pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:280px;}
 .pin-key{background:#fff;border:1px solid #e4d3b8;border-radius:14px;color:#5c3517;
-  font-family:'DM Sans',sans-serif;font-size:1.5rem;font-weight:600;
-  height:64px;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;
-  box-shadow:0 1px 3px rgba(92,53,23,.08);transition:transform .1s, background .15s;}
+font-family:‘DM Sans’,sans-serif;font-size:1.5rem;font-weight:600;
+height:64px;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;
+box-shadow:0 1px 3px rgba(92,53,23,.08);transition:transform .1s, background .15s;}
 .pin-key:active{background:#f4e8d1;transform:scale(.94);}
 .pin-key.del{font-size:1rem;color:#8a6840;}
 .pin-key.empty{background:transparent;border:none;box-shadow:none;pointer-events:none;}
 @keyframes pinShake{0%,100%{transform:none}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
 .pin-shake{animation:pinShake .3s ease;}
 @supports(padding:env(safe-area-inset-bottom)){
-  .botnav{padding-bottom:env(safe-area-inset-bottom);}
+.botnav{padding-bottom:env(safe-area-inset-bottom);}
 }
-
 
 /* ── Mobile intel cards ── */
-.intel-card{background:var(--s);border:1px solid var(--bd);border-radius:12px;
-  padding:14px;margin-bottom:10px;}
+.intel-card{background:var(–s);border:1px solid var(–bd);border-radius:12px;
+padding:14px;margin-bottom:10px;}
 .intel-card-name{font-weight:700;font-size:.9rem;margin-bottom:6px;
-  display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .intel-card-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
-.intel-card-stat{background:var(--s2);border-radius:8px;padding:8px 10px;}
-.intel-card-stat-label{font-size:.6rem;font-weight:700;color:var(--mu);
-  text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;}
-.intel-card-stat-val{font-size:.88rem;font-weight:700;color:var(--ink);}
+.intel-card-stat{background:var(–s2);border-radius:8px;padding:8px 10px;}
+.intel-card-stat-label{font-size:.6rem;font-weight:700;color:var(–mu);
+text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;}
+.intel-card-stat-val{font-size:.88rem;font-weight:700;color:var(–ink);}
 .intel-card-signal{font-size:.72rem;font-weight:600;margin-top:8px;
-  padding:6px 10px;border-radius:8px;background:var(--s2);}
+padding:6px 10px;border-radius:8px;background:var(–s2);}
 @media(min-width:641px){.intel-mobile-cards{display:none;}}
 @media(max-width:640px){
-  .intel-desktop-table{display:none;}
-  .intel-mobile-cards{display:block;}
+.intel-desktop-table{display:none;}
+.intel-mobile-cards{display:block;}
 }
 
-
 /* ── Plan mobile cards ── */
-.plan-card-item{background:var(--s);border:1px solid var(--bd);border-radius:12px;
-  padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
-.plan-card-rec{font-family:'Libre Baskerville',serif;font-size:2rem;font-weight:700;
-  min-width:52px;text-align:center;line-height:1;}
-.plan-card-rec small{display:block;font-family:'DM Sans',sans-serif;font-size:.6rem;
-  font-weight:400;color:var(--mu);text-transform:uppercase;letter-spacing:.3px;}
+.plan-card-item{background:var(–s);border:1px solid var(–bd);border-radius:12px;
+padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
+.plan-card-rec{font-family:‘Libre Baskerville’,serif;font-size:2rem;font-weight:700;
+min-width:52px;text-align:center;line-height:1;}
+.plan-card-rec small{display:block;font-family:‘DM Sans’,sans-serif;font-size:.6rem;
+font-weight:400;color:var(–mu);text-transform:uppercase;letter-spacing:.3px;}
 .plan-card-info{flex:1;}
 .plan-card-name{font-weight:700;font-size:.88rem;margin-bottom:4px;}
 .plan-card-signal{font-size:.72rem;margin-bottom:3px;}
-.plan-card-reason{font-size:.68rem;color:var(--mu);}
-.skip-card-item{padding:10px 12px;background:var(--s2);border-radius:10px;
-  margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;}
+.plan-card-reason{font-size:.68rem;color:var(–mu);}
+.skip-card-item{padding:10px 12px;background:var(–s2);border-radius:10px;
+margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;}
 .skip-card-name{font-weight:700;font-size:.85rem;}
-.skip-card-info{font-size:.72rem;color:var(--mu);margin-top:2px;}
-.skip-card-carry{font-size:.82rem;font-weight:700;color:var(--bl);}
+.skip-card-info{font-size:.72rem;color:var(–mu);margin-top:2px;}
+.skip-card-carry{font-size:.82rem;font-weight:700;color:var(–bl);}
 @media(min-width:641px){.plan-mobile-view{display:none;}}
 @media(max-width:640px){
-  #plan-make-card .tw{display:none;}
-  #plan-skip-card .tw{display:none;}
-  .plan-mobile-view{display:block;}
+#plan-make-card .tw{display:none;}
+#plan-skip-card .tw{display:none;}
+.plan-mobile-view{display:block;}
 }
-
 
 @media(max-width:640px){
-  #rev-stats-row{grid-template-columns:repeat(3,1fr) !important;}
-  #rev-stats-row .st:nth-child(4),
-  #rev-stats-row .st:nth-child(5){grid-column:span 1;}
+#rev-stats-row{grid-template-columns:repeat(3,1fr) !important;}
+#rev-stats-row .st:nth-child(4),
+#rev-stats-row .st:nth-child(5){grid-column:span 1;}
 }
-
 
 /* ── Catalog mobile cards ── */
 @media(max-width:640px){
-  .catalog-desktop{display:none;}
-  .catalog-mobile{display:block;}
+.catalog-desktop{display:none;}
+.catalog-mobile{display:block;}
 }
 @media(min-width:641px){
-  .catalog-mobile{display:none;}
+.catalog-mobile{display:none;}
 }
-.cat-card{background:var(--s);border:1px solid var(--bd);border-radius:12px;
-  padding:12px;margin-bottom:8px;}
+.cat-card{background:var(–s);border:1px solid var(–bd);border-radius:12px;
+padding:12px;margin-bottom:8px;}
 .cat-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
 .cat-card-name{font-weight:700;font-size:.9rem;}
 .cat-card-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;align-items:center;}
 .cat-card-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
-.cat-card-stat{font-size:.72rem;color:var(--mu);}
-.cat-card-stat strong{color:var(--ink);font-size:.82rem;}
-.cat-card-price{display:flex;align-items:center;gap:8px;background:var(--s2);
-  border-radius:8px;padding:8px 10px;}
-.cat-card-price label{font-size:.68rem;font-weight:700;color:var(--mu);
-  text-transform:uppercase;white-space:nowrap;}
+.cat-card-stat{font-size:.72rem;color:var(–mu);}
+.cat-card-stat strong{color:var(–ink);font-size:.82rem;}
+.cat-card-price{display:flex;align-items:center;gap:8px;background:var(–s2);
+border-radius:8px;padding:8px 10px;}
+.cat-card-price label{font-size:.68rem;font-weight:700;color:var(–mu);
+text-transform:uppercase;white-space:nowrap;}
 .cat-card-price input{flex:1;min-width:0;font-size:1rem;font-weight:700;
-  padding:6px 8px;border:1.5px solid var(--bd);border-radius:7px;
-  background:var(--s);width:100%;}
-
+padding:6px 8px;border:1.5px solid var(–bd);border-radius:7px;
+background:var(–s);width:100%;}
 
 @media(max-width:640px){
-  .mb{align-items:flex-end;padding:0;}
-  .mo{border-radius:20px 20px 0 0;max-height:90vh;overflow-y:auto;
-    -webkit-overflow-scrolling:touch;padding-bottom:env(safe-area-inset-bottom,20px);}
+.mb{align-items:flex-end;padding:0;}
+.mo{border-radius:20px 20px 0 0;max-height:90vh;overflow-y:auto;
+-webkit-overflow-scrolling:touch;padding-bottom:env(safe-area-inset-bottom,20px);}
 }
-
 
 /* ── Log Add Row ── */
 .log-add-row{
-  display:grid;
-  grid-template-columns:1fr 72px 72px auto;
-  gap:8px;
-  align-items:flex-end;
+display:grid;
+grid-template-columns:1fr 72px 72px auto;
+gap:8px;
+align-items:flex-end;
 }
 @media(max-width:420px){
-  .log-add-row{
-    grid-template-columns:1fr 64px 64px auto;
-    gap:6px;
-  }
+.log-add-row{
+grid-template-columns:1fr 64px 64px auto;
+gap:6px;
+}
 }
 .log-add-select select,
 .log-add-qty input{
-  width:100%;
+width:100%;
 }
 .log-add-qty input{
-  text-align:center;
-  font-size:1rem;
-  font-weight:700;
+text-align:center;
+font-size:1rem;
+font-weight:700;
 }
 
 /* ── Log Table ── */
 .log-table{
-  width:100%;
-  border-collapse:collapse;
-  font-size:.82rem;
+width:100%;
+border-collapse:collapse;
+font-size:.82rem;
 }
 .log-table th{
-  background:var(--s2);
-  color:var(--mu);
-  font-size:.65rem;
-  font-weight:700;
-  text-transform:uppercase;
-  letter-spacing:.4px;
-  padding:8px 10px;
-  text-align:left;
-  border-bottom:2px solid var(--bd);
-  white-space:nowrap;
+background:var(–s2);
+color:var(–mu);
+font-size:.65rem;
+font-weight:700;
+text-transform:uppercase;
+letter-spacing:.4px;
+padding:8px 10px;
+text-align:left;
+border-bottom:2px solid var(–bd);
+white-space:nowrap;
 }
 .log-table td{
-  padding:9px 10px;
-  border-bottom:1px solid var(--s2);
-  vertical-align:middle;
+padding:9px 10px;
+border-bottom:1px solid var(–s2);
+vertical-align:middle;
 }
 .log-table tbody tr:last-child td{border-bottom:none;}
-.log-table tbody tr:hover td{background:var(--s2);}
+.log-table tbody tr:hover td{background:var(–s2);}
 
 /* Item name cell */
 .lt-name{font-weight:700;font-size:.82rem;}
-.lt-type{font-size:.6rem;color:var(--mu);}
+.lt-type{font-size:.6rem;color:var(–mu);}
 
 /* Editable number cells */
 .lt-input{
-  width:52px;
-  text-align:center;
-  font-size:.88rem;
-  font-weight:700;
-  padding:5px 4px;
-  border:1.5px solid var(--bd);
-  border-radius:7px;
-  background:var(--s);
-  color:var(--ink);
-  -webkit-appearance:none;
+width:52px;
+text-align:center;
+font-size:.88rem;
+font-weight:700;
+padding:5px 4px;
+border:1.5px solid var(–bd);
+border-radius:7px;
+background:var(–s);
+color:var(–ink);
+-webkit-appearance:none;
 }
 .lt-input:focus{
-  outline:none;
-  border-color:var(--am);
-  box-shadow:0 0 0 3px rgba(184,96,10,.1);
+outline:none;
+border-color:var(–am);
+box-shadow:0 0 0 3px rgba(184,96,10,.1);
 }
 .lt-input.cf-input{
-  border-color:#b0c8f0;
-  background:var(--blb);
-  color:var(--bl);
+border-color:#b0c8f0;
+background:var(–blb);
+color:var(–bl);
 }
 .lt-input.cf-input:focus{
-  border-color:var(--bl);
-  box-shadow:0 0 0 3px rgba(26,78,136,.1);
+border-color:var(–bl);
+box-shadow:0 0 0 3px rgba(26,78,136,.1);
 }
 
 /* Carry-forward column.
-   Default: chip-style read-only display (cf-display).
-   When the column-level toggle button unlocks editing, the input (cf-input)
-   takes over. Both elements occupy the same visual footprint so the column
-   width doesn't shift between locked and unlocked states. */
+Default: chip-style read-only display (cf-display).
+When the column-level toggle button unlocks editing, the input (cf-input)
+takes over. Both elements occupy the same visual footprint so the column
+width doesn’t shift between locked and unlocked states. */
 .cf-cell{
-  display:flex;align-items:center;justify-content:center;
+display:flex;align-items:center;justify-content:center;
 }
 .cf-display{
-  display:inline-block;min-width:52px;text-align:center;
-  font-weight:700;font-size:.88rem;color:var(--bl);
-  background:var(--blb);border:1.5px solid #b0c8f0;border-radius:7px;
-  padding:5px 8px;
+display:inline-block;min-width:52px;text-align:center;
+font-weight:700;font-size:.88rem;color:var(–bl);
+background:var(–blb);border:1.5px solid #b0c8f0;border-radius:7px;
+padding:5px 8px;
 }
 
 /* Total cell */
-.lt-total{font-weight:700;font-size:.9rem;color:var(--ink);}
-.lt-stockout{color:var(--re);font-size:.65rem;font-weight:700;}
+.lt-total{font-weight:700;font-size:.9rem;color:var(–ink);}
+.lt-stockout{color:var(–re);font-size:.65rem;font-weight:700;}
 
 /* Delete button */
 .lt-del{
-  background:none;border:none;color:var(--mu);
-  cursor:pointer;font-size:.85rem;padding:4px 6px;
-  border-radius:6px;-webkit-tap-highlight-color:transparent;
-  line-height:1;
+background:none;border:none;color:var(–mu);
+cursor:pointer;font-size:.85rem;padding:4px 6px;
+border-radius:6px;-webkit-tap-highlight-color:transparent;
+line-height:1;
 }
-.lt-del:active{background:var(--reb);color:var(--re);}
+.lt-del:active{background:var(–reb);color:var(–re);}
 
 /* Totals footer row */
 .log-table tfoot td{
-  padding:8px 10px;
-  background:var(--s2);
-  font-weight:700;
-  font-size:.82rem;
-  border-top:2px solid var(--bd);
+padding:8px 10px;
+background:var(–s2);
+font-weight:700;
+font-size:.82rem;
+border-top:2px solid var(–bd);
 }
-.lt-foot-label{font-size:.68rem;font-weight:700;color:var(--mu);text-transform:uppercase;}
-
+.lt-foot-label{font-size:.68rem;font-weight:700;color:var(–mu);text-transform:uppercase;}
 
 /* ── Calendar Modal ── */
 .cal-wd{
-  text-align:center;font-size:.62rem;font-weight:700;
-  color:var(--mu);text-transform:uppercase;letter-spacing:.5px;
-  padding:6px 0;
+text-align:center;font-size:.62rem;font-weight:700;
+color:var(–mu);text-transform:uppercase;letter-spacing:.5px;
+padding:6px 0;
 }
 .cal-day{
-  aspect-ratio:1;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  border-radius:8px;font-size:.82rem;font-weight:600;
-  cursor:pointer;transition:transform .1s;
-  -webkit-tap-highlight-color:transparent;
-  border:1.5px solid transparent;
-  min-height:38px;
-  padding:2px;
+aspect-ratio:1;
+display:flex;flex-direction:column;align-items:center;justify-content:center;
+border-radius:8px;font-size:.82rem;font-weight:600;
+cursor:pointer;transition:transform .1s;
+-webkit-tap-highlight-color:transparent;
+border:1.5px solid transparent;
+min-height:38px;
+padding:2px;
 }
 .cal-day:active{transform:scale(.92);}
 .cal-day.logged{background:#246038;color:#fff;}
 .cal-day.logged:active{background:#1a4e2a;}
-.cal-day.missed{background:#fdf0ee;color:var(--re);border-color:#e8b0b0;}
-.cal-day.today{border:2px solid var(--am);}
-.cal-day.future{background:var(--s2);color:var(--mu);cursor:default;}
+.cal-day.missed{background:#fdf0ee;color:var(–re);border-color:#e8b0b0;}
+.cal-day.today{border:2px solid var(–am);}
+.cal-day.future{background:var(–s2);color:var(–mu);cursor:default;}
 .cal-day.future:active{transform:none;}
 .cal-day.empty{background:transparent;pointer-events:none;}
 .cal-day-num{font-size:.82rem;line-height:1;}
 .cal-day-sales{font-size:.55rem;opacity:.8;margin-top:1px;line-height:1;}
 .cal-dot{
-  display:inline-block;width:10px;height:10px;border-radius:50%;
-  vertical-align:middle;margin-right:3px;
+display:inline-block;width:10px;height:10px;border-radius:50%;
+vertical-align:middle;margin-right:3px;
 }
 .cal-dot.cal-logged{background:#246038;}
 .cal-dot.cal-missed{background:#fdf0ee;border:1px solid #e8b0b0;}
-.cal-dot.cal-today{border:2px solid var(--am);background:#fff;}
-.cal-dot.cal-future{background:var(--s2);border:1px solid var(--bd);}
+.cal-dot.cal-today{border:2px solid var(–am);background:#fff;}
+.cal-dot.cal-future{background:var(–s2);border:1px solid var(–bd);}
 @media(max-width:480px){
-  #calendarModal .mo{margin:12px;padding:16px;}
-  .cal-day{min-height:42px;font-size:.88rem;}
-  .cal-day-sales{font-size:.52rem;}
+#calendarModal .mo{margin:12px;padding:16px;}
+.cal-day{min-height:42px;font-size:.88rem;}
+.cal-day-sales{font-size:.52rem;}
 
-  /* ── Daily log table compaction ──
-     Tighten cells, fonts, and inputs to fit a 360px-wide phone viewport.
-     The CF chip and CF input are deliberately the same width so the column
-     doesn't reflow when the user toggles edit mode. */
-  .log-table th,
-  .log-table td{padding:7px 5px;}
-  .log-table th{font-size:.6rem;letter-spacing:.3px;}
-  .lt-input{width:44px;font-size:.82rem;padding:5px 2px;}
-  .lt-name{font-size:.76rem;}
-  .lt-type{font-size:.55rem;}
-  .lt-total{font-size:.85rem;}
-  .cf-display{
-    min-width:44px;padding:5px 4px;font-size:.82rem;border-radius:5px;
-  }
-  .lt-input.cf-input{width:44px;}
+/* ── Daily log table compaction ──
+Tighten cells, fonts, and inputs to fit a 360px-wide phone viewport.
+The CF chip and CF input are deliberately the same width so the column
+doesn’t reflow when the user toggles edit mode. */
+.log-table th,
+.log-table td{padding:7px 5px;}
+.log-table th{font-size:.6rem;letter-spacing:.3px;}
+.lt-input{width:44px;font-size:.82rem;padding:5px 2px;}
+.lt-name{font-size:.76rem;}
+.lt-type{font-size:.55rem;}
+.lt-total{font-size:.85rem;}
+.cf-display{
+min-width:44px;padding:5px 4px;font-size:.82rem;border-radius:5px;
+}
+.lt-input.cf-input{width:44px;}
 }
 
 </style>
@@ -747,6 +738,7 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
 </div>
 
 <!-- NAV -->
+
 <div class="nav">
   <div class="brand">🥐 Chabua Bakery <small>CLOUD ☁️</small></div>
   <div class="tab active" onclick="gT('log',this)">📋 Log</div>
@@ -763,6 +755,7 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
 </div>
 
 <!-- BOTTOM NAV (mobile) -->
+
 <div class="botnav">
   <div class="botnav-inner">
     <button class="bnav active" id="bn-log"     onclick="gTm('log')">    <span class="ico">📋</span><span class="lbl">Log</span></button>
@@ -776,6 +769,7 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
 <div id="toast"></div>
 
 <!-- MODAL: EXPIRING TODAY -->
+
 <div class="mb" id="expiringModal" onclick="if(event.target===this)closeExpiring()">
   <div class="mo" style="max-width:480px;padding:22px;">
     <div style="text-align:center;margin-bottom:14px;">
@@ -794,6 +788,7 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
 </div>
 
 <!-- MODAL: CALENDAR -->
+
 <div class="mb" id="calendarModal" onclick="if(event.target===this)closeCalendar()">
   <div class="mo" style="max-width:480px;padding:20px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
@@ -826,6 +821,7 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
 </div>
 
 <!-- MODAL: ADD ITEM -->
+
 <div class="mb" id="addModal" onclick="if(event.target===this)closeModal()">
   <div class="mo">
     <h3>➕ Add Item to Catalog</h3>
@@ -835,34 +831,38 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
         <input type="text" id="mn" placeholder="e.g. Croissant">
       </div>
 
-      <div>
-        <label class="fl">Expiry (days from bake date)</label>
-        <select id="ms">
-          <option value="1">1 day — sell same day only</option>
-          <option value="2" selected>2 days</option>
-          <option value="3">3 days</option>
-          <option value="4">4 days</option>
-          <option value="5">5 days</option>
-          <option value="6">6 days</option>
-          <option value="7">7 days — one week</option>
-          <option value="8">8 days</option>
-          <option value="9">9 days</option>
-          <option value="10">10 days</option>
-        </select>
-      </div>
-      <div>
-        <label class="fl">Selling Price per Unit (₹)</label>
-        <input type="number" id="mprice" min="0" step="0.5" value="0" placeholder="e.g. 45">
-      </div>
-    </div>
-    <div class="mf">
-      <button class="btn btg" onclick="closeModal()">Cancel</button>
-      <button class="btn" onclick="saveItem()">Add Item</button>
-    </div>
+```
+  <div>
+    <label class="fl">Expiry (days from bake date)</label>
+    <select id="ms">
+      <option value="1">1 day — sell same day only</option>
+      <option value="2" selected>2 days</option>
+      <option value="3">3 days</option>
+      <option value="4">4 days</option>
+      <option value="5">5 days</option>
+      <option value="6">6 days</option>
+      <option value="7">7 days — one week</option>
+      <option value="8">8 days</option>
+      <option value="9">9 days</option>
+      <option value="10">10 days</option>
+    </select>
+  </div>
+  <div>
+    <label class="fl">Selling Price per Unit (₹)</label>
+    <input type="number" id="mprice" min="0" step="0.5" value="0" placeholder="e.g. 45">
+  </div>
+</div>
+<div class="mf">
+  <button class="btn btg" onclick="closeModal()">Cancel</button>
+  <button class="btn" onclick="saveItem()">Add Item</button>
+</div>
+```
+
   </div>
 </div>
 
 <!-- DAY SUMMARY MODAL -->
+
 <div class="mb" id="summaryModal" onclick="if(event.target===this)closeSummary()">
   <div class="mo" style="max-width:520px;padding:18px 14px 28px;width:calc(100% - 24px);margin:0 auto;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
@@ -885,6 +885,7 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
 </div>
 
 <!-- ══════ PAGE: LOG ══════ -->
+
 <div class="page active" id="page-log">
   <div class="sr">
     <div class="st"><div class="sn" id="s1">0</div><div class="sl">Days Logged</div></div>
@@ -895,6 +896,7 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
   </div>
 
   <!-- Top action buttons -->
+
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
     <button onclick="openModal()" style="
       background:var(--am);color:#fff;border:none;border-radius:12px;
@@ -913,79 +915,83 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
   <div class="card">
     <div class="ct">📋 Daily Log</div>
 
-    <!-- Date -->
-    <div style="margin-bottom:14px;min-width:0;">
-      <label class="fl">Date</label>
-      <input type="date" id="logDate" onchange="onDateChange()" style="width:100%;box-sizing:border-box;">
-    </div>
+```
+<!-- Date -->
+<div style="margin-bottom:14px;min-width:0;">
+  <label class="fl">Date</label>
+  <input type="date" id="logDate" onchange="onDateChange()" style="width:100%;box-sizing:border-box;">
+</div>
 
-    <!-- Add item row: select + made + sold + button -->
-    <div class="log-add-row">
-      <div class="log-add-select">
-        <label class="fl">Item</label>
-        <select id="itemPicker">
-          <option value="">— select —</option>
-        </select>
-      </div>
-      <div class="log-add-qty">
-        <label class="fl">Made</label>
-        <input type="number" id="addMade" inputmode="numeric" pattern="[0-9]*" min="0" step="1" placeholder="0" onfocus="this.select()">
-      </div>
-      <div class="log-add-qty">
-        <label class="fl">Sold</label>
-        <input type="number" id="addSold" inputmode="numeric" pattern="[0-9]*" min="0" step="1" placeholder="0" onfocus="this.select()">
-      </div>
-      <button class="btn" id="addBtn" onclick="addLogRow()" style="margin-top:auto;">+ Add</button>
-    </div>
+<!-- Add item row: select + made + sold + button -->
+<div class="log-add-row">
+  <div class="log-add-select">
+    <label class="fl">Item</label>
+    <select id="itemPicker">
+      <option value="">— select —</option>
+    </select>
+  </div>
+  <div class="log-add-qty">
+    <label class="fl">Made</label>
+    <input type="number" id="addMade" inputmode="numeric" pattern="[0-9]*" min="0" step="1" placeholder="0" onfocus="this.select()">
+  </div>
+  <div class="log-add-qty">
+    <label class="fl">Sold</label>
+    <input type="number" id="addSold" inputmode="numeric" pattern="[0-9]*" min="0" step="1" placeholder="0" onfocus="this.select()">
+  </div>
+  <button class="btn" id="addBtn" onclick="addLogRow()" style="margin-top:auto;">+ Add</button>
+</div>
 
-    <!-- Entries table -->
-    <div id="logTableWrap" style="display:none;margin-top:14px;">
-      <!-- CF lock toggle: by default the Carry Fwd column is read-only.
-           Tap to unlock all CF cells at once for editing; tap again to lock. -->
-      <div style="display:flex;justify-content:flex-end;margin-bottom:6px;">
-        <button type="button" id="cfLockBtn" onclick="toggleCfEdit()"
-          style="background:transparent;border:1px solid var(--bd);
-          border-radius:6px;padding:4px 10px;font-size:.7rem;font-weight:600;
-          color:var(--mu);cursor:pointer;-webkit-tap-highlight-color:transparent;
-          font-family:'DM Sans',sans-serif;letter-spacing:.2px;">
-          🔒 Edit Carry Fwd
-        </button>
-      </div>
-      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
-        <table class="log-table">
-          <thead>
-            <tr>
-              <th>Item</th>
-              <th>Carry Fwd</th>
-              <th>Made</th>
-              <th>Total</th>
-              <th>Sold</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="logTableBody"></tbody>
-          <tfoot id="logTableFoot"></tfoot>
-        </table>
-      </div>
-    </div>
+<!-- Entries table -->
+<div id="logTableWrap" style="display:none;margin-top:14px;">
+  <!-- CF lock toggle: by default the Carry Fwd column is read-only.
+       Tap to unlock all CF cells at once for editing; tap again to lock. -->
+  <div style="display:flex;justify-content:flex-end;margin-bottom:6px;">
+    <button type="button" id="cfLockBtn" onclick="toggleCfEdit()"
+      style="background:transparent;border:1px solid var(--bd);
+      border-radius:6px;padding:4px 10px;font-size:.7rem;font-weight:600;
+      color:var(--mu);cursor:pointer;-webkit-tap-highlight-color:transparent;
+      font-family:'DM Sans',sans-serif;letter-spacing:.2px;">
+      🔒 Edit Carry Fwd
+    </button>
+  </div>
+  <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+    <table class="log-table">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Carry Fwd</th>
+          <th>Made</th>
+          <th>Total</th>
+          <th>Sold</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="logTableBody"></tbody>
+      <tfoot id="logTableFoot"></tfoot>
+    </table>
+  </div>
+</div>
 
-    <!-- Footer -->
-    <div style="display:flex;justify-content:space-between;align-items:center;
-      margin-top:14px;padding-top:12px;border-top:1px solid var(--bd);flex-wrap:wrap;gap:8px;">
-      <div>
-        <div id="live-rev" style="font-size:.88rem;font-weight:700;color:var(--gr)"></div>
-        <div id="live-summary" style="font-size:.72rem;color:var(--mu);margin-top:2px;"></div>
-        <div id="saveStatusMobile" style="font-size:.7rem;margin-top:3px;display:none;"></div>
-      </div>
-      <div style="display:flex;gap:8px;">
-        <button class="btn btg" onclick="clearLogEntries()">Clear</button>
-        <button class="btn" id="saveDayBtn" onclick="saveDay()" disabled>💾 Save Day</button>
-      </div>
-    </div>
+<!-- Footer -->
+<div style="display:flex;justify-content:space-between;align-items:center;
+  margin-top:14px;padding-top:12px;border-top:1px solid var(--bd);flex-wrap:wrap;gap:8px;">
+  <div>
+    <div id="live-rev" style="font-size:.88rem;font-weight:700;color:var(--gr)"></div>
+    <div id="live-summary" style="font-size:.72rem;color:var(--mu);margin-top:2px;"></div>
+    <div id="saveStatusMobile" style="font-size:.7rem;margin-top:3px;display:none;"></div>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <button class="btn btg" onclick="clearLogEntries()">Clear</button>
+    <button class="btn" id="saveDayBtn" onclick="saveDay()" disabled>💾 Save Day</button>
+  </div>
+</div>
+```
+
   </div>
 </div>
 
 <!-- ══════ PAGE: INTELLIGENCE ══════ -->
+
 <div class="page" id="page-intel">
   <div id="ie" class="empty"><div class="ico">🧠</div><p>Log at least <strong>3 days</strong> to unlock intelligence.</p></div>
   <div id="ib" style="display:none;">
@@ -1019,6 +1025,7 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
 </div>
 
 <!-- ══════ PAGE: DAILY PLAN ══════ -->
+
 <div class="page" id="page-daily">
   <div class="card">
     <div class="ct">🎯 Smart Daily Production Plan</div>
@@ -1075,6 +1082,7 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
 </div>
 
 <!-- ══════ PAGE: HISTORY ══════ -->
+
 <div class="page" id="page-history">
   <div class="card">
     <div class="ct">📅 Log History</div>
@@ -1098,8 +1106,8 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
   </div>
 </div>
 
-
 <!-- ══════ PAGE: REVENUE ══════ -->
+
 <div class="page" id="page-revenue">
   <div class="sr" id="rev-stats-row" style="grid-template-columns:repeat(5,1fr);">
     <div class="st"><div class="sn" id="rv1">₹0</div><div class="sl">Total Revenue</div></div>
@@ -1112,60 +1120,63 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
   <div id="rev-empty" class="empty"><div class="ico">💰</div><p>No days logged yet. Go to the <strong>Log</strong> tab and save your first day to see revenue data.</p></div>
   <div id="rev-body" style="display:none;">
 
-    <div id="rev-price-nudge" style="display:none;background:var(--amb);border:1px solid var(--am);border-radius:10px;padding:11px 14px;margin-bottom:14px;font-size:.78rem;color:var(--ink2);">
-      💡 <strong>Prices not set yet.</strong> Go to <strong>Catalog</strong> tab and add a price per unit for each item — then revenue will calculate automatically from your logged sales.
-    </div>
+```
+<div id="rev-price-nudge" style="display:none;background:var(--amb);border:1px solid var(--am);border-radius:10px;padding:11px 14px;margin-bottom:14px;font-size:.78rem;color:var(--ink2);">
+  💡 <strong>Prices not set yet.</strong> Go to <strong>Catalog</strong> tab and add a price per unit for each item — then revenue will calculate automatically from your logged sales.
+</div>
 
-    <div class="card">
-      <div class="ct">📅 Daily Revenue — Last 30 Days</div>
-      <div id="rev-daily-chart"></div>
-    </div>
+<div class="card">
+  <div class="ct">📅 Daily Revenue — Last 30 Days</div>
+  <div id="rev-daily-chart"></div>
+</div>
 
-    <div class="two">
-      <div class="card">
-        <div class="ct">🏆 Revenue by Item</div>
-        <p class="mu2" style="margin-bottom:8px;">Total revenue earned per item across all logged days.</p>
-        <div id="rev-by-item"></div>
-      </div>
-      <div class="card">
-        <div class="ct">📅 Revenue by Day of Week</div>
-        <p class="mu2" style="margin-bottom:8px;">Average daily revenue per weekday.</p>
-        <div class="dw" id="rev-dow"></div>
-      </div>
-    </div>
+<div class="two">
+  <div class="card">
+    <div class="ct">🏆 Revenue by Item</div>
+    <p class="mu2" style="margin-bottom:8px;">Total revenue earned per item across all logged days.</p>
+    <div id="rev-by-item"></div>
+  </div>
+  <div class="card">
+    <div class="ct">📅 Revenue by Day of Week</div>
+    <p class="mu2" style="margin-bottom:8px;">Average daily revenue per weekday.</p>
+    <div class="dw" id="rev-dow"></div>
+  </div>
+</div>
 
-    <div class="card">
-      <div class="ct">📆 Weekly Revenue Trend</div>
-      <p class="mu2" style="margin-bottom:12px;">Total revenue per calendar week. Each bar = one week. Amber = current week.</p>
-      <div id="rev-weekly-chart"></div>
-    </div>
+<div class="card">
+  <div class="ct">📆 Weekly Revenue Trend</div>
+  <p class="mu2" style="margin-bottom:12px;">Total revenue per calendar week. Each bar = one week. Amber = current week.</p>
+  <div id="rev-weekly-chart"></div>
+</div>
 
-    <div class="card">
-      <div class="ct">🗓️ Monthly Revenue Trend</div>
-      <p class="mu2" style="margin-bottom:12px;">Total revenue per calendar month. Shows growth or decline over months.</p>
-      <div id="rev-monthly-chart"></div>
-    </div>
+<div class="card">
+  <div class="ct">🗓️ Monthly Revenue Trend</div>
+  <p class="mu2" style="margin-bottom:12px;">Total revenue per calendar month. Shows growth or decline over months.</p>
+  <div id="rev-monthly-chart"></div>
+</div>
 
-    <div class="card">
-      <div class="ct">📋 Revenue Log</div>
-      <div class="tw"><table>
-        <thead><tr>
-          <th>Date</th><th>Day</th><th>Units Sold</th><th>Revenue</th>
-          <th>Top Item</th><th>Avg/Unit</th>
-        </tr></thead>
-        <tbody id="revLogBody"></tbody>
-      </table></div>
-    </div>
+<div class="card">
+  <div class="ct">📋 Revenue Log</div>
+  <div class="tw"><table>
+    <thead><tr>
+      <th>Date</th><th>Day</th><th>Units Sold</th><th>Revenue</th>
+      <th>Top Item</th><th>Avg/Unit</th>
+    </tr></thead>
+    <tbody id="revLogBody"></tbody>
+  </table></div>
+</div>
 
-    <div class="card">
-      <div class="ct">💡 Revenue Insights</div>
-      <div class="ig" id="rev-insights"></div>
-    </div>
+<div class="card">
+  <div class="ct">💡 Revenue Insights</div>
+  <div class="ig" id="rev-insights"></div>
+</div>
+```
 
   </div>
 </div>
 
 <!-- ══════ PAGE: CATALOG ══════ -->
+
 <div class="page" id="page-catalog">
   <div class="card" style="background:#2a1a08;border-color:#3a2510;">
     <div class="ct" style="color:#d4862a;">🔒 PIN Lock</div>
@@ -2309,8 +2320,13 @@ function clearLogEntries(){
 }
 
 function updateCFBanner(){
-  const dateStr = document.getElementById('logDate').value;
-  if(!dateStr){ document.getElementById('cfBanner').style.display='none'; return; }
+  // The cfBanner element was removed from the markup but JS references remained.
+  // Guard against the element being absent so this no-ops cleanly instead of
+  // throwing TypeError that aborts whatever flow called us (clear, save, etc.).
+  const banner = document.getElementById('cfBanner');
+  if(!banner) return;
+  const dateStr = document.getElementById('logDate')?.value || '';
+  if(!dateStr){ banner.style.display='none'; return; }
   const cfItems = Object.keys(F).map(id => {
     const c = cat(id); if(!c) return null;
     const cf = getCarryForward(id, dateStr);
@@ -2318,11 +2334,9 @@ function updateCFBanner(){
     const shelfLabel = `${c.shelfDays}d expiry`;
     return {name:c.name, cf, shelfLabel};
   }).filter(Boolean);
-  const banner = document.getElementById('cfBanner');
   if(cfItems.length){
     banner.style.display='block';
     const freshItems = cfItems.filter(x => x.type === 'fresh');
-    const multiItems = cfItems.filter(x => x.type !== 'fresh');
     let msg = '📦 <strong>Carry-forward stock:</strong> ';
     msg += cfItems.map(x => `<strong>${x.name}</strong> +${x.cf} (${x.shelfLabel})`).join(', ');
     if(freshItems.length){
@@ -2412,7 +2426,10 @@ function saveDay(){
   if(tb) tb.innerHTML = '';
   const tf = document.getElementById('logTableFoot');
   if(tf) tf.innerHTML = '';
-  document.getElementById('logEntries').innerHTML = '';
+  // Legacy cards container — element was removed from markup but old code still
+  // referenced it. Guard so save doesn't crash on save.
+  const le = document.getElementById('logEntries');
+  if(le) le.innerHTML = '';
   // Auto-lock CF — leaving the column unlocked across saves is sloppy and
   // could cause accidental edits when the next day's rows auto-populate.
   if(_cfUnlocked) toggleCfEdit();
@@ -4307,5 +4324,6 @@ function startPreload(){
   }
 })();
 </script>
+
 </body>
 </html>
