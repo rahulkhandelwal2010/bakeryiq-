@@ -7,7 +7,7 @@
 //     Format: YYYY-MM-DD-x (use a/b/c for multiple deploys on the same day).
 //     Changing this constant changes sw.js bytes, which is what triggers
 //     the browser to re-activate the service worker and rebuild the cache.
-const BUILD_ID = '2026-04-28-q';
+const BUILD_ID = '2026-04-28-r';
 const CACHE = 'chabua-' + BUILD_ID;
 
 // Install — skip waiting so new SW activates immediately
