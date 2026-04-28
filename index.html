@@ -32,6 +32,20 @@
 –rel:#d85858;
 –bl:#3d6fa8;
 –bll:#5a8fd0;
+/* Soft tinted backgrounds (companions to the primary color tokens above).
+These pair with their main hue for chips, badges, info cards, status
+indicators, and any subtle highlight that needs a coloured wash. Without
+these, hundreds of var() references across the stylesheet fall back to
+browser defaults (transparent), which removes the entire visual theme. */
+–amb:#fdf3e4;
+–blb:#e7eef9;
+–grb:#e8f0e3;
+–reb:#f9e8e8;
+–orb:#fdeedb;
+–or:#d97a1b;
+/* Box-shadows used by cards and modals. Soft warm tone matching the bg. */
+–sh:0 1px 3px rgba(58,30,8,.08), 0 1px 2px rgba(58,30,8,.04);
+–sh2:0 6px 24px rgba(58,30,8,.12), 0 2px 6px rgba(58,30,8,.08);
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 html{font-size:13px;}
@@ -4025,14 +4039,16 @@ function checkAndShowExpiring(){
       </div>`;
     }).join('');
 
-    // Remove last border for cleaner look
+    // Open via the same .open-class pattern used by other modals — keeps the
+    // styling consistent (slide-up animation, proper backdrop, mobile bottom-
+    // sheet on small screens) instead of bypassing the CSS with inline display.
     const modal = document.getElementById('expiringModal');
-    modal.style.display = 'flex';
+    modal.classList.add('open');
   }, 400);
 }
 
 function closeExpiring(){
-  document.getElementById('expiringModal').style.display = 'none';
+  document.getElementById('expiringModal').classList.remove('open');
 }
 
 // ════════════ CALENDAR MODAL ════════════
@@ -4212,9 +4228,28 @@ function showChangePinScreen(){
 }
 
 // ════════════ SERVICE WORKER ════════════
+// Registers the SW and reloads the page when a new version takes over so the
+// user never sees a half-stale state (new HTML referencing old CSS class names,
+// or vice-versa). Without this, the SW updates in the background but the open
+// page keeps using whatever it loaded — which is exactly what causes "CSS is
+// gone" reports after a deploy.
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('sw.js').catch(()=>{});
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      // When a new SW takes control of this page, reload so the user sees the
+      // matching new HTML/CSS/JS. Guard with a flag to prevent infinite reloads.
+      let reloading = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if(reloading) return;
+        reloading = true;
+        // Give the new SW a moment to fully activate before reloading.
+        setTimeout(() => location.reload(), 100);
+      });
+      // Periodically check for updates while the page is open (every 5 min).
+      // This lets long-running PWA sessions pick up new builds without needing
+      // the user to manually close-and-reopen the app.
+      setInterval(() => reg.update().catch(()=>{}), 5*60*1000);
+    }).catch(()=>{});
   });
 }
 
