@@ -2573,15 +2573,13 @@ function saveDay(){
 
   saveAndWait()
     .then(()=>{
+      // Status flips to "✓ Saved" but the modal stays open. The user reviews
+      // the summary at their pace and dismisses with Confirm or ✕. Auto-close
+      // was too quick — people couldn't read what they just saved.
       setSummarySaveStatus('ok');
-      // Auto-close after a beat so the user sees the confirmation.
-      setTimeout(()=>{
-        const m = document.getElementById('summaryModal');
-        if(m && m.classList.contains('open')) closeSummary();
-      }, 1500);
     })
     .catch(()=>{
-      // Don't auto-close on failure — user needs to know.
+      // Don't auto-close on failure either — user needs to know it failed.
       setSummarySaveStatus('error');
     });
 }
@@ -4505,7 +4503,7 @@ function startPreload(){
 <!-- Build version stamp (small, bottom-right). Tap to force a hard reload that
      bypasses the service worker cache — useful when investigating "why am I
      not seeing the new build" issues. The text is the BUILD_ID from sw.js. -->
-<div id="buildStamp" onclick="if(confirm('Force reload and clear cache? This will reload the page and fetch fresh files.')){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>{if(window.caches){caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(()=>location.reload(true));}else{location.reload(true);}});}else{location.reload(true);}}" style="position:fixed;bottom:6px;right:6px;font-size:9px;color:rgba(138,104,64,.45);font-family:monospace;z-index:9998;cursor:pointer;padding:3px 6px;-webkit-tap-highlight-color:transparent;user-select:none;">build t</div>
+<div id="buildStamp" onclick="if(confirm('Force reload and clear cache? This will reload the page and fetch fresh files.')){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>{if(window.caches){caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(()=>location.reload(true));}else{location.reload(true);}});}else{location.reload(true);}}" style="position:fixed;bottom:6px;right:6px;font-size:9px;color:rgba(138,104,64,.45);font-family:monospace;z-index:9998;cursor:pointer;padding:3px 6px;-webkit-tap-highlight-color:transparent;user-select:none;">build u</div>
 
 </body>
 </html>
