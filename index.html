@@ -1027,6 +1027,14 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
 <div class="page" id="page-intel">
   <div id="ie" class="empty"><div class="ico">🧠</div><p>Log at least <strong>3 days</strong> to unlock intelligence.</p></div>
   <div id="ib" style="display:none;">
+    <!-- Waste summary: aggregated picture of what got thrown out this week,
+         lost revenue, top offending items, and stuff expiring within 24 hours.
+         Sits at the top because waste is the most actionable signal — it's a
+         direct money loss the operator can do something about today. -->
+    <div class="card" id="wasteSummaryCard" style="display:none;">
+      <div class="ct">🗑 Waste Summary</div>
+      <div id="wasteSummaryBody"></div>
+    </div>
     <div class="card"><div class="ct">🧠 Auto-Generated Insights</div><div class="ig" id="ins-cards"></div></div>
     <div class="card">
       <div class="ct">📊 Per-Item Intelligence</div>
@@ -1123,6 +1131,15 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
         <tbody id="histBody"></tbody>
       </table></div>
     </div>
+  </div>
+  <!-- Per-item waste trend: small horizontal bar chart per item showing
+       daily expired-units over the last N days. Each bar = one day; bar
+       height proportional to that day's expiry count. Items with zero
+       waste over the window are hidden so the card focuses attention on
+       what actually wasted. -->
+  <div class="card" id="wasteTrendCard" style="display:none;">
+    <div class="ct">🗑 Waste Trend by Item <span style="font-size:.65rem;color:var(--mu);font-weight:400;">last 14 days</span></div>
+    <div id="wasteTrendBody"></div>
   </div>
   <div class="card">
     <div class="ct">💾 Backup & Restore</div>
@@ -2964,6 +2981,7 @@ function renderIntel(){
   renderIntelMobileCards(intels);
   renderIntelCharts(intels);
   renderInsightCards(intels);
+  renderWasteSummary();
 }
 
 function renderIntelTable(intels){
@@ -3106,6 +3124,214 @@ function renderInsightCards(intels){
     text:`After 14 days: weekday patterns become reliable. After 30 days: trend detection is accurate. After 60 days: the demand estimate stabilises. Keep logging every day.`});
   document.getElementById('ins-cards').innerHTML=cards.slice(0,8).map(c=>`
     <div class="ic ${c.cls}"><h4>${c.title}</h4><p>${c.text}</p></div>`).join('');
+}
+
+// ════════════ WASTE SUMMARY ════════════
+//
+// Aggregates "expired" units across the catalog over a window and surfaces
+// the rupee value, top offenders, and what's about to expire. Rendered into
+// the Intelligence tab (top card) and consumed by the History tab's per-
+// item waste-trend chart.
+//
+// "Expired" = units that crossed shelf life unsold. Computed by computeItemWaste,
+// which does FIFO batch tracking and calendar-based expiry. In-flight stock
+// (still on the shelf, within shelf life) does NOT count as waste — only what
+// was actually thrown out.
+
+function computeWasteData(windowDays){
+  // Returns per-item waste over the window, plus aggregates.
+  const today = S.logs.length ? S.logs[S.logs.length-1].date : new Date().toISOString().split('T')[0];
+  const items = S.catalog.filter(c => c.active).map(c => {
+    const w = computeItemWaste(c.id, today, windowDays);
+    if(!w || w.expired === 0) return null;
+    return {
+      id: c.id,
+      name: c.name,
+      shelfDays: c.shelfDays,
+      price: c.price || 0,
+      expired: w.expired,
+      sold: w.sold,
+      lostRev: (c.price || 0) * w.expired,
+      sellRate: w.trueSellRate
+    };
+  }).filter(Boolean);
+  items.sort((a,b) => b.lostRev - a.lostRev);
+  const totalExpired = items.reduce((s,i) => s+i.expired, 0);
+  const totalLostRev = items.reduce((s,i) => s+i.lostRev, 0);
+  return {items, totalExpired, totalLostRev, today};
+}
+
+function renderWasteSummary(){
+  const card = document.getElementById('wasteSummaryCard');
+  const body = document.getElementById('wasteSummaryBody');
+  if(!card || !body) return;
+  const data = computeWasteData(7);
+  if(data.totalExpired === 0){
+    // Either no waste this week (good) or not enough history. Hide entirely
+    // when there's no waste, to keep the page focused on what needs action.
+    card.style.display = 'none';
+    return;
+  }
+  card.style.display = 'block';
+
+  // Also compute "expiring tomorrow" — same data the morning popup uses.
+  // Get tomorrow's date relative to the latest log.
+  const tomorrow = (() => {
+    const d = new Date(data.today + 'T00:00:00');
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split('T')[0];
+  })();
+  const expiringTomorrow = getExpiringToday(tomorrow);
+  const expiringTomorrowQty = expiringTomorrow.reduce((s,e) => s + (e.qty || 0), 0);
+  const expiringTomorrowRev = expiringTomorrow.reduce((s,e) => {
+    const c = cat(e.id);
+    return s + (c?.price || 0) * (e.qty || 0);
+  }, 0);
+
+  const topN = data.items.slice(0, 5);
+
+  body.innerHTML = `
+    <div style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:14px;">
+      <div style="flex:1;min-width:140px;padding:10px 14px;background:var(--reb);border-radius:8px;border-left:4px solid var(--re);">
+        <div style="font-size:.65rem;color:var(--mu);text-transform:uppercase;letter-spacing:.5px;">This week</div>
+        <div style="font-size:1.4rem;font-weight:700;color:var(--re);line-height:1.1;margin-top:2px;">${data.totalExpired} units</div>
+        <div style="font-size:.78rem;color:var(--ink2);margin-top:1px;">₹${data.totalLostRev.toLocaleString('en-IN')} lost</div>
+      </div>
+      ${expiringTomorrowQty > 0 ? `
+      <div style="flex:1;min-width:140px;padding:10px 14px;background:var(--amb);border-radius:8px;border-left:4px solid var(--am);">
+        <div style="font-size:.65rem;color:var(--mu);text-transform:uppercase;letter-spacing:.5px;">Expiring tomorrow</div>
+        <div style="font-size:1.4rem;font-weight:700;color:var(--am);line-height:1.1;margin-top:2px;">${expiringTomorrowQty} units</div>
+        <div style="font-size:.78rem;color:var(--ink2);margin-top:1px;">₹${expiringTomorrowRev.toLocaleString('en-IN')} at risk</div>
+      </div>
+      ` : ''}
+    </div>
+    <div style="font-size:.72rem;color:var(--mu);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:8px;">Top offenders (last 7 days)</div>
+    <div>
+      ${topN.map(it => {
+        const pct = data.totalLostRev > 0 ? (it.lostRev / data.totalLostRev) * 100 : 0;
+        return `
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--s2);">
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:600;font-size:.85rem;color:var(--ink);">${it.name}</div>
+            <div style="font-size:.7rem;color:var(--mu);margin-top:1px;">${it.expired} units expired · sell rate ${it.sellRate ? Math.round(it.sellRate*100)+'%' : '—'}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-weight:700;font-size:.9rem;color:var(--re);">₹${it.lostRev.toLocaleString('en-IN')}</div>
+            <div style="font-size:.62rem;color:var(--mu);">${pct.toFixed(0)}% of waste</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+    ${data.items.length > 5 ? `<div style="font-size:.7rem;color:var(--mu);margin-top:8px;text-align:center;">+ ${data.items.length - 5} other item${data.items.length-5>1?'s':''} with waste</div>` : ''}
+  `;
+}
+
+// Per-item waste trend in History: tiny inline bar charts showing daily
+// expired-units over the last 14 days. Items with zero waste are hidden.
+function renderWasteTrend(){
+  const card = document.getElementById('wasteTrendCard');
+  const body = document.getElementById('wasteTrendBody');
+  if(!card || !body) return;
+  const WINDOW_DAYS = 14;
+  if(!S.logs.length){
+    card.style.display = 'none';
+    return;
+  }
+  const today = S.logs[S.logs.length-1].date;
+
+  // Build the date axis for the last WINDOW_DAYS days (oldest → newest)
+  const dates = [];
+  for(let i = WINDOW_DAYS - 1; i >= 0; i--){
+    const d = new Date(today + 'T00:00:00');
+    d.setDate(d.getDate() - i);
+    dates.push(d.toISOString().split('T')[0]);
+  }
+
+  // For each item: per-day expired count. Tricky bit: computeItemWaste over
+  // a single day window doesn't work cleanly — it gives expired count for
+  // batches that crossed shelf life within that day.
+  //
+  // Approach: compute cumulative-up-to-each-date and diff. expired_on_day_N
+  // = computeItemWaste(...,N).expired - computeItemWaste(...,N-1).expired.
+  // (windowDays=null = all-time.)
+  //
+  // For better signal, we compute the all-time waste stream, then keep only
+  // the last WINDOW_DAYS days.
+  const items = [];
+  for(const c of S.catalog.filter(c => c.active)){
+    // Build per-day expired stream by diffing all-time waste at consecutive dates
+    const series = [];
+    let prevExpired = 0;
+    // Walk from earliest log date through `today`
+    const firstLog = S.logs[0]?.date || today;
+    let cursor = new Date(firstLog + 'T00:00:00');
+    const todayD = new Date(today + 'T00:00:00');
+    const allDays = [];
+    while(cursor <= todayD){
+      const ds = cursor.toISOString().split('T')[0];
+      const w = computeItemWaste(c.id, ds, null);
+      const expToday = w ? w.expired : 0;
+      allDays.push({date: ds, expired: expToday - prevExpired});
+      prevExpired = expToday;
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    // Slice to last WINDOW_DAYS
+    const recent = allDays.slice(-WINDOW_DAYS);
+    // Pad with zeros on the front if recent < WINDOW_DAYS
+    const padded = [];
+    for(const ds of dates){
+      const m = recent.find(r => r.date === ds);
+      padded.push({date: ds, expired: m ? m.expired : 0});
+    }
+    const total = padded.reduce((s,d) => s+d.expired, 0);
+    if(total === 0) continue;  // skip items with zero waste in window
+    items.push({
+      id: c.id,
+      name: c.name,
+      price: c.price || 0,
+      shelfDays: c.shelfDays,
+      series: padded,
+      total,
+      lostRev: (c.price || 0) * total
+    });
+  }
+
+  if(!items.length){
+    card.style.display = 'none';
+    return;
+  }
+  card.style.display = 'block';
+  items.sort((a,b) => b.total - a.total);
+
+  // Find max single-day expired across all items (for bar scale)
+  const maxBar = Math.max(...items.flatMap(i => i.series.map(d => d.expired)), 1);
+
+  body.innerHTML = items.map(it => {
+    const bars = it.series.map(d => {
+      const h = d.expired === 0 ? 4 : Math.max(4, (d.expired / maxBar) * 36);
+      const dn = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(d.date+'T00:00:00').getDay()];
+      const tt = `${d.date} (${dn}): ${d.expired} expired`;
+      return `<div title="${tt}" style="flex:1;height:${h}px;background:${d.expired>0?'var(--re)':'var(--bd)'};border-radius:2px 2px 0 0;min-width:0;"></div>`;
+    }).join('');
+    return `
+      <div style="padding:10px 0;border-bottom:1px solid var(--s2);">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px;gap:10px;">
+          <div style="font-weight:600;font-size:.85rem;color:var(--ink);min-width:0;flex:1;">${it.name}</div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-size:.75rem;font-weight:700;color:var(--re);">${it.total} units</div>
+            <div style="font-size:.62rem;color:var(--mu);">₹${it.lostRev.toLocaleString('en-IN')} lost</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:2px;height:38px;padding:0 1px;">
+          ${bars}
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:.55rem;color:var(--mu);margin-top:3px;">
+          <span>${dates[0].slice(5)}</span>
+          <span>${dates[dates.length-1].slice(5)}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 // ════════════ DAILY PLAN ════════════
@@ -3511,6 +3737,8 @@ function renderHistory(){
       <td><span class="p ${sr>=80?'pg':sr>=60?'pa':'pr'}">${sr}%</span></td>
       <td><button class="bdel" onclick="delLog('${l.date}')">Delete</button></td>
     </tr>`;}).join('');
+  // Render the per-item waste trend card below the daily history table.
+  renderWasteTrend();
 }
 
 function delLog(d){
@@ -4503,7 +4731,7 @@ function startPreload(){
 <!-- Build version stamp (small, bottom-right). Tap to force a hard reload that
      bypasses the service worker cache — useful when investigating "why am I
      not seeing the new build" issues. The text is the BUILD_ID from sw.js. -->
-<div id="buildStamp" onclick="if(confirm('Force reload and clear cache? This will reload the page and fetch fresh files.')){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>{if(window.caches){caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(()=>location.reload(true));}else{location.reload(true);}});}else{location.reload(true);}}" style="position:fixed;bottom:6px;right:6px;font-size:9px;color:rgba(138,104,64,.45);font-family:monospace;z-index:9998;cursor:pointer;padding:3px 6px;-webkit-tap-highlight-color:transparent;user-select:none;">build u</div>
+<div id="buildStamp" onclick="if(confirm('Force reload and clear cache? This will reload the page and fetch fresh files.')){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>{if(window.caches){caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(()=>location.reload(true));}else{location.reload(true);}});}else{location.reload(true);}}" style="position:fixed;bottom:6px;right:6px;font-size:9px;color:rgba(138,104,64,.45);font-family:monospace;z-index:9998;cursor:pointer;padding:3px 6px;-webkit-tap-highlight-color:transparent;user-select:none;">build v</div>
 
 </body>
 </html>
