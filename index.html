@@ -933,6 +933,29 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
       <input type="date" id="logDate" onchange="onDateChange()" style="width:100%;box-sizing:border-box;">
     </div>
 
+    <!-- Saved-state card: shown when this date has a saved log AND we're not
+         in edit mode. Hides the picker/table/save controls so it's clear the
+         day is locked in. The Edit button reopens the table populated with the
+         actual saved values (so edits work on real data, not blank rows). -->
+    <div id="logSavedCard" style="display:none;margin-top:6px;padding:14px 14px 12px;
+      background:var(--grb);border:1.5px solid var(--gr);border-radius:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+        <div style="min-width:0;">
+          <div style="font-weight:700;font-size:.95rem;color:var(--gr);display:flex;align-items:center;gap:6px;">
+            ✓ <span>Day saved</span>
+          </div>
+          <div id="logSavedSummary" style="font-size:.72rem;color:var(--mu);margin-top:3px;"></div>
+        </div>
+        <button class="btn btg" onclick="enterLogEditMode()" style="font-size:.78rem;padding:7px 14px;">
+          ✏️ Edit
+        </button>
+      </div>
+    </div>
+
+    <!-- Edit group: picker + table + footer save controls. Hidden when the
+         current date already has a saved log (the saved card above shows
+         instead). Wrapping these in one container lets us toggle as a unit. -->
+    <div id="logEditGroup">
     <!-- Add item row: select + made + sold + button -->
     <div class="log-add-row">
       <div class="log-add-select">
@@ -996,6 +1019,7 @@ td input[type=text]{width:110px;padding:4px 6px;font-size:.77rem;}
         <button class="btn" id="saveDayBtn" onclick="saveDay()" disabled>💾 Save Day</button>
       </div>
     </div>
+    </div> <!-- /logEditGroup -->
   </div>
 </div>
 
@@ -1888,10 +1912,102 @@ function onDateChange(){
   clearDraft();
   // Reset CF lock to default (locked) for the new date.
   if(_cfUnlocked) toggleCfEdit();
+  // Reset edit-mode flag — switching dates always starts in default state
+  // (saved → collapsed view; unsaved → edit view).
+  _logEditMode = false;
 
   buildItemPicker();
-  autoAddCarryForwards();
+  // Only auto-add CF rows when this date will show the edit view. For dates
+  // that already have a saved log we collapse straight to the saved card.
+  const dateStr = byId('logDate')?.value || '';
+  const saved = getSavedLogFor(dateStr);
+  if(!saved){
+    autoAddCarryForwards();
+  }
+  renderDailyLogState();
   if(hadTypedData) toast('Cleared form for new date — save before switching to keep entries');
+}
+
+// ════════════ DAILY-LOG VIEW STATE ════════════
+// The daily-log section can be in one of two visual states:
+//
+//   1. EDIT mode: picker + table + Save controls visible. User can add rows,
+//      type made/sold values, save the day. CF auto-rows populate on entry.
+//
+//   2. SAVED mode (collapsed): the editing UI is hidden. A small green card
+//      shows "✓ Day saved" + summary stats and an Edit button.
+//
+// Choosing between them: if a saved log exists for the current date AND we
+// haven't been put into manual edit mode by the user, show SAVED. Otherwise
+// show EDIT.
+//
+// The flag below is reset on date change or save and only set true when the
+// user explicitly taps Edit on a saved day.
+let _logEditMode = false;
+
+function getSavedLogFor(dateStr){
+  if(!dateStr) return null;
+  return S.logs.find(l => l.date === dateStr) || null;
+}
+
+function renderDailyLogState(){
+  const dateStr = document.getElementById('logDate')?.value || '';
+  const saved = getSavedLogFor(dateStr);
+  const showSaved = !!saved && !_logEditMode;
+  const card = document.getElementById('logSavedCard');
+  const group = document.getElementById('logEditGroup');
+  if(showSaved){
+    if(card){
+      card.style.display = 'block';
+      const sum = document.getElementById('logSavedSummary');
+      if(sum){
+        const n = saved.entries.length;
+        const totalMade = saved.entries.reduce((s,e)=>s+(e.made||0),0);
+        const totalSold = saved.entries.reduce((s,e)=>s+(e.sold||0),0);
+        const dn = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(dateStr+'T00:00:00').getDay()];
+        sum.textContent = `${n} item${n!==1?'s':''} · ${totalMade} made · ${totalSold} sold · ${dn} ${dateStr}`;
+      }
+    }
+    if(group) group.style.display = 'none';
+  } else {
+    if(card) card.style.display = 'none';
+    if(group) group.style.display = '';
+  }
+}
+
+// Enter edit mode for a saved day: rebuild F from the saved entries (so the
+// user sees the actual saved values, not blank rows or a fresh CF auto-add)
+// and re-render the table. Then re-render state to show the edit group.
+function enterLogEditMode(){
+  const dateStr = document.getElementById('logDate')?.value || '';
+  const saved = getSavedLogFor(dateStr);
+  if(!saved) return;
+  _logEditMode = true;
+  // Reset in-progress form, then populate from saved entries.
+  F = {};
+  const tb = document.getElementById('logTableBody');
+  if(tb) tb.innerHTML = '';
+  const tf = document.getElementById('logTableFoot');
+  if(tf) tf.innerHTML = '';
+  saved.entries.forEach(e => {
+    F[e.item_id || e.id] = {
+      made: e.made || 0,
+      sold: e.sold || 0,
+      cf:   e.carry_in != null ? e.carry_in : (e.carryIn || 0)
+    };
+  });
+  // Render rows
+  Object.keys(F).forEach(id => renderTableRow(id));
+  if(Object.keys(F).length){
+    const wrap = document.getElementById('logTableWrap');
+    if(wrap) wrap.style.display = 'block';
+  }
+  buildItemPicker();
+  updateCFBanner();
+  updateLiveSummary();
+  updateTableFooter();
+  updateSaveDayButton();
+  renderDailyLogState();
 }
 
 function autoAddCarryForwards(){
@@ -2277,24 +2393,35 @@ function removeEntry(itemId){
 }
 
 function clearLogEntries(){
-  // Resets the day's entries while preserving carry-forward rows.
+  // Resets the day's entries while preserving the right rows for context.
   //
-  // Behavior:
-  // - Rows with a non-zero carry-forward value (auto-added or user-edited) STAY.
-  //   Their typed made/sold values are reset to 0; the CF value is preserved.
-  // - Rows that were manually added from the picker (cf=0) are dropped entirely.
-  // - The CF column lock is reset (any in-progress unlock state is closed).
+  // Two modes:
   //
-  // This way "Clear" never wipes the CF values the user may have edited via
-  // the column-level edit button — those can only be changed via that button.
-  // To wipe everything including CF, change the date or refresh.
+  // a) Editing a saved day (_logEditMode + saved log exists):
+  //    Keep ALL rows visible — the user is editing a saved set, dropping
+  //    rows would lose context about what was originally saved. Just zero
+  //    made/sold so they can retype. CF stays.
+  //
+  // b) Fresh entry (no saved log, or not in edit mode):
+  //    Keep only CF-backed rows (auto-added carry-forward); drop manually-
+  //    added rows that have no CF backing. Zero made/sold on what remains.
+  //
+  // Either way the persisted data in S.logs/cloud is untouched — Clear only
+  // resets the in-progress form. To restore the saved values when in edit
+  // mode, exit edit mode (which will reload from saved state on next entry).
   const byId = id => document.getElementById(id);
+  const dateStr = byId('logDate')?.value || '';
+  const isEditingSaved = _logEditMode && !!getSavedLogFor(dateStr);
+
   const newF = {};
   Object.keys(F).forEach(id => {
     const e = F[id];
     if(!e) return;
-    // Preserve only rows backed by carry-forward stock.
-    if((e.cf||0) > 0){
+    if(isEditingSaved){
+      // Editing a saved day: keep every row, just zero typed values.
+      newF[id] = {made:0, sold:0, cf:e.cf||0};
+    } else if((e.cf||0) > 0){
+      // Fresh entry: keep only CF-backed rows.
       newF[id] = {made:0, sold:0, cf:e.cf};
     }
   });
@@ -2433,11 +2560,14 @@ function saveDay(){
   // Auto-lock CF — leaving the column unlocked across saves is sloppy and
   // could cause accidental edits when the next day's rows auto-populate.
   if(_cfUnlocked) toggleCfEdit();
-  autoAddCarryForwards();
-  // Explicitly disable Save Day button: the form has been reset, no typed data,
-  // so the button should not be clickable until the user enters something new.
-  // (autoAddCarryForwards calls updateLiveSummary which handles this, but be
-  // defensive in case the call order changes in the future.)
+  // Snap to the saved-view: exit edit mode, render the collapsed card.
+  // We deliberately do NOT call autoAddCarryForwards here — the user either
+  // sees the saved card (showing what they just saved) or enters edit mode
+  // explicitly to continue. autoAddCarryForwards runs when they Edit or move
+  // to a different date.
+  _logEditMode = false;
+  renderDailyLogState();
+  // Explicitly disable Save Day button: form has been reset, no typed data.
   updateSaveDayButton();
   renderStats();
 
@@ -3408,7 +3538,14 @@ function delLog(d){
   clearDraft();
   buildItemPicker();
   updateCFBanner();
-  autoAddCarryForwards();
+  // Reset edit mode and let renderDailyLogState decide what to show. If the
+  // deleted log matched the current date, we're now an unsaved date so the
+  // edit view will show.
+  _logEditMode = false;
+  if(!getSavedLogFor(byId('logDate')?.value || '')){
+    autoAddCarryForwards();
+  }
+  renderDailyLogState();
 }
 
 function exportData(){
@@ -3426,7 +3563,12 @@ function importData(ev){
       S=d; await saveAll();
       try{updateNav();}catch(ex){}
       renderHistory();renderStats();renderCatalog();
-      buildItemPicker();autoAddCarryForwards();
+      buildItemPicker();
+      _logEditMode = false;
+      if(!getSavedLogFor(document.getElementById('logDate')?.value||'')){
+        autoAddCarryForwards();
+      }
+      renderDailyLogState();
       toast('Imported & saved to cloud ✓');
     }catch(ex){alert('Import failed: '+ex.message);}
   };
@@ -3436,7 +3578,12 @@ function clearAll(){if(!confirm('Delete ALL data?'))return;S.logs=[];save();rend
 function loadSample(){
   if(!confirm('Load 30-day sample data? This will replace your current data.'))return;
   S=JSON.parse(JSON.stringify(SAMPLE_DATA));
-  save();renderHistory();renderStats();renderCatalog();buildItemPicker();autoAddCarryForwards();
+  save();renderHistory();renderStats();renderCatalog();buildItemPicker();
+  _logEditMode = false;
+  if(!getSavedLogFor(document.getElementById('logDate')?.value||'')){
+    autoAddCarryForwards();
+  }
+  renderDailyLogState();
   toast('Sample data loaded ✓');
 }
 
@@ -4264,7 +4411,13 @@ async function startApp(){
     }
     initLogDate();
     buildItemPicker();
-    autoAddCarryForwards();
+    // Only seed CF rows if today's date is unsaved. If today already has a
+    // saved log (rare on first load but possible after pull from cloud), we'll
+    // collapse to the saved card instead.
+    if(!getSavedLogFor(document.getElementById('logDate').value)){
+      autoAddCarryForwards();
+    }
+    renderDailyLogState();
     renderStats();
     updateNav();
     // Show expiring-today popup if this was a fresh PIN login
@@ -4282,7 +4435,10 @@ async function startApp(){
         await load();
         initLogDate();
         buildItemPicker();
-        autoAddCarryForwards();
+        if(!getSavedLogFor(document.getElementById('logDate').value)){
+          autoAddCarryForwards();
+        }
+        renderDailyLogState();
         renderStats();
         updateNav();
       } catch(e2){ console.error('Fresh load also failed:', e2); }
@@ -4349,7 +4505,7 @@ function startPreload(){
 <!-- Build version stamp (small, bottom-right). Tap to force a hard reload that
      bypasses the service worker cache — useful when investigating "why am I
      not seeing the new build" issues. The text is the BUILD_ID from sw.js. -->
-<div id="buildStamp" onclick="if(confirm('Force reload and clear cache? This will reload the page and fetch fresh files.')){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>{if(window.caches){caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(()=>location.reload(true));}else{location.reload(true);}});}else{location.reload(true);}}" style="position:fixed;bottom:6px;right:6px;font-size:9px;color:rgba(138,104,64,.45);font-family:monospace;z-index:9998;cursor:pointer;padding:3px 6px;-webkit-tap-highlight-color:transparent;user-select:none;">build s</div>
+<div id="buildStamp" onclick="if(confirm('Force reload and clear cache? This will reload the page and fetch fresh files.')){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>{if(window.caches){caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(()=>location.reload(true));}else{location.reload(true);}});}else{location.reload(true);}}" style="position:fixed;bottom:6px;right:6px;font-size:9px;color:rgba(138,104,64,.45);font-family:monospace;z-index:9998;cursor:pointer;padding:3px 6px;-webkit-tap-highlight-color:transparent;user-select:none;">build t</div>
 
 </body>
 </html>
