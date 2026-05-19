@@ -2916,26 +2916,61 @@ function intel(itemId){
   })();
   const stockoutMul = 1.10 + 0.30 * Math.min(1, Math.max(0, recentSoRate));
 
-  // Self-correcting demand observations
-  const obs=allE.map(e=>e.stockout ? e.made * stockoutMul : e.sold);
+  // Bulk-order spike filter.
+  //   Caterers/parties occasionally place one-time bulk orders that don't
+  //   reflect daily demand. Without filtering, a single 100-unit day inflates
+  //   demEst for weeks and the engine recommends over-baking.
+  //   Rule: for each non-stockout day, compute the AVERAGE of the prior 7
+  //   non-stockout observations. If today's sold > 2 × that average, replace
+  //   the observation with the average itself (i.e., pretend it was a normal
+  //   day for planning purposes). History is untouched — this only affects
+  //   what the planner learns from.
+  //   IMPORTANT: the average is computed over the already-corrected `obs`
+  //   array, NOT raw e.sold. This is cascading correction — a spike that's
+  //   been replaced doesn't poison the baseline for the next 7 days.
+  //   Stockout days are never capped — stockoutMul already handles them.
+  //   Requires >=4 prior non-stockout entries for a reliable baseline.
+  const SPIKE_MULT = 2;
+  const SPIKE_WINDOW = 7;
+  const SPIKE_MIN_PRIOR = 4;
+  const obs = [];
+  for(let i = 0; i < allE.length; i++){
+    const e = allE[i];
+    if(e.stockout){
+      obs.push(e.made * stockoutMul);
+      continue;
+    }
+    // Collect up to SPIKE_WINDOW prior non-stockout OBS values (not raw sold).
+    const prior = [];
+    for(let j = i - 1; j >= 0 && prior.length < SPIKE_WINDOW; j--){
+      if(!allE[j].stockout) prior.push(obs[j]);
+    }
+    if(prior.length < SPIKE_MIN_PRIOR){
+      obs.push(e.sold);
+      continue;
+    }
+    const avg = prior.reduce((a,b) => a + b, 0) / prior.length;
+    obs.push(e.sold > SPIKE_MULT * avg ? avg : e.sold);
+  }
   // Weighted average (index+1 = weight, so latest day weights highest)
   let wS=0,wT=0;
   obs.forEach((v,i)=>{const w=i+1;wS+=v*w;wT+=w;});
   const demEst=wT>0?wS/wT:avgSold;
 
-  // Trend: last 14d vs prior 14d (with 7d fallback if <28 days)
-  // Wider windows catch gradual growth/decline that narrow windows miss
+  // Trend: last 14d vs prior 14d (with 7d fallback if <28 days).
+  // Uses the spike-corrected `obs` array (not raw e.sold) so bulk-order
+  // spikes don't falsely flip trend to "growing".
   let trend='new',trendPct=0;
   if(n>=28){
-    const rec=allE.slice(-14),prior=allE.slice(-28,-14);
-    const r=rec.reduce((a,e)=>a+e.sold,0)/rec.length;
-    const p=prior.reduce((a,e)=>a+e.sold,0)/prior.length;
+    const rec=obs.slice(-14),prior=obs.slice(-28,-14);
+    const r=rec.reduce((a,v)=>a+v,0)/rec.length;
+    const p=prior.reduce((a,v)=>a+v,0)/prior.length;
     trendPct=p>0?Math.round((r-p)/p*100):0;
     trend=trendPct>10?'up':trendPct<-10?'down':'stable';
   } else if(n>=14){
-    const rec=allE.slice(-7),prior=allE.slice(-14,-7);
-    const r=rec.reduce((a,e)=>a+e.sold,0)/rec.length;
-    const p=prior.reduce((a,e)=>a+e.sold,0)/prior.length;
+    const rec=obs.slice(-7),prior=obs.slice(-14,-7);
+    const r=rec.reduce((a,v)=>a+v,0)/rec.length;
+    const p=prior.reduce((a,v)=>a+v,0)/prior.length;
     trendPct=p>0?Math.round((r-p)/p*100):0;
     trend=trendPct>10?'up':trendPct<-10?'down':'stable';
   } else if(n>=3) trend='stable';
@@ -3026,7 +3061,29 @@ function dowDemand(itemId,dow){
     ? allRecent.filter(e=>e.stockout).length / allRecent.length
     : 0;
   const stockoutMul = 1.10 + 0.30 * Math.min(1, Math.max(0, recentSoRate));
-  const obs = dowE.map(e=>e.stockout ? e.made * stockoutMul : e.sold);
+  // Bulk-order spike filter (same rule as intel(), but baseline is the
+  // average of prior non-stockout entries OF THE SAME WEEKDAY — so a
+  // Saturday bulk order is judged against other Saturdays, not weekdays,
+  // since weekend demand is genuinely higher).
+  const SPIKE_MULT = 2, SPIKE_WINDOW = 7, SPIKE_MIN_PRIOR = 4;
+  const obs = [];
+  for(let i = 0; i < dowE.length; i++){
+    const e = dowE[i];
+    if(e.stockout){
+      obs.push(e.made * stockoutMul);
+      continue;
+    }
+    const prior = [];
+    for(let j = i - 1; j >= 0 && prior.length < SPIKE_WINDOW; j--){
+      if(!dowE[j].stockout) prior.push(obs[j]);
+    }
+    if(prior.length < SPIKE_MIN_PRIOR){
+      obs.push(e.sold);
+      continue;
+    }
+    const avg = prior.reduce((a,b) => a + b, 0) / prior.length;
+    obs.push(e.sold > SPIKE_MULT * avg ? avg : e.sold);
+  }
   // Linear weights: oldest=1, newest=N
   let wS=0,wT=0;
   obs.forEach((v,i)=>{const w=i+1;wS+=v*w;wT+=w;});
@@ -3833,13 +3890,51 @@ function itemSignal(itemId, dow){
   // Counting these as zero-demand days drags the average down and creates a
   // self-reinforcing loop (low estimate → recommend less → made=0 again →
   // estimate stays low). The check: nothing was on the shelf to sell.
-  const wasOffered = e => (e.made||0) > 0 || (e.carry_in||0) > 0;
-  const dowE = allE.filter(e=>e.dow===dow && wasOffered(e));
-  const demEst = dowE.length >= 2
-    ? dowE.reduce((s,e)=>s+inferDemand(e),0)/dowE.length
+  const wasOffered = e => (e.made||0) > 0 || (e.carryIn||0) > 0;
+
+  // ── BULK-ORDER SPIKE FILTER ──
+  // Caterers/parties occasionally place one-time bulk orders. Without filtering,
+  // a single 100-unit day inflates demEst for weeks and the planner over-bakes.
+  // Rule: for each non-stockout day, compute the AVERAGE of the prior 7
+  // non-stockout *corrected* observations. If today's sold > 2 × that average,
+  // replace the observation with the average itself.
+  // Cascading: the baseline uses the already-corrected `obs` values, so two
+  // spikes in a row don't hide each other.
+  // Stockout days bypass — stockoutMul already handles unmet demand there.
+  // Requires >=4 prior non-stockout entries for a reliable baseline.
+  const SPIKE_MULT = 2, SPIKE_WINDOW = 7, SPIKE_MIN_PRIOR = 4;
+  const obsAll = [];
+  for(let i = 0; i < allE.length; i++){
+    const e = allE[i];
+    if(e.stockout){
+      obsAll.push(inferDemand(e));
+      continue;
+    }
+    const prior = [];
+    for(let j = i - 1; j >= 0 && prior.length < SPIKE_WINDOW; j--){
+      if(!allE[j].stockout) prior.push(obsAll[j]);
+    }
+    if(prior.length < SPIKE_MIN_PRIOR){
+      obsAll.push(e.sold || 0);
+      continue;
+    }
+    const avgPrior = prior.reduce((a,b) => a + b, 0) / prior.length;
+    obsAll.push((e.sold || 0) > SPIKE_MULT * avgPrior ? avgPrior : (e.sold || 0));
+  }
+
+  // Demand estimate (weekday-specific if available), built from spike-corrected obs.
+  const dowIdxs = allE
+    .map((e, i) => ({e, i}))
+    .filter(({e}) => e.dow === dow && wasOffered(e));
+  const demEst = dowIdxs.length >= 2
+    ? dowIdxs.reduce((s, {i}) => s + obsAll[i], 0) / dowIdxs.length
     : (() => {
-        const offered = allE.filter(wasOffered);
-        return offered.length ? offered.reduce((s,e)=>s+inferDemand(e),0)/offered.length : 0;
+        const offeredIdxs = allE
+          .map((e, i) => ({e, i}))
+          .filter(({e}) => wasOffered(e));
+        return offeredIdxs.length
+          ? offeredIdxs.reduce((s, {i}) => s + obsAll[i], 0) / offeredIdxs.length
+          : 0;
       })();
 
   // ── CONVERGENCE LOOP (Improvement B) ──
@@ -5157,7 +5252,7 @@ function startPreload(){
 <!-- Build version stamp (small, bottom-right). Tap to force a hard reload that
      bypasses the service worker cache — useful when investigating "why am I
      not seeing the new build" issues. The text is the BUILD_ID from sw.js. -->
-<div id="buildStamp" onclick="if(confirm('Force reload and clear cache? This will reload the page and fetch fresh files.')){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>{if(window.caches){caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(()=>location.reload(true));}else{location.reload(true);}});}else{location.reload(true);}}" style="position:fixed;bottom:6px;right:6px;font-size:9px;color:rgba(138,104,64,.45);font-family:monospace;z-index:9998;cursor:pointer;padding:3px 6px;-webkit-tap-highlight-color:transparent;user-select:none;">build ab</div>
+<div id="buildStamp" onclick="if(confirm('Force reload and clear cache? This will reload the page and fetch fresh files.')){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>{if(window.caches){caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(()=>location.reload(true));}else{location.reload(true);}});}else{location.reload(true);}}" style="position:fixed;bottom:6px;right:6px;font-size:9px;color:rgba(138,104,64,.45);font-family:monospace;z-index:9998;cursor:pointer;padding:3px 6px;-webkit-tap-highlight-color:transparent;user-select:none;">build a</div>
 
 </body>
 </html>
