@@ -4016,6 +4016,11 @@ function needsBatchToday(itemId, dateStr){
   // (not `sold`, which is artificially capped) so chronic-shortage items don't
   // get systematically under-sized batches. The stockoutMul mirrors itemSignal's
   // adaptive multiplier (1.10..1.40 based on recent stockout frequency).
+  //
+  // Bulk-order spikes are filtered (same rule as itemSignal()): non-stockout
+  // days where sold > 2 × rolling-avg-of-prior-7-corrected-obs are replaced
+  // with that average. Without this, a single 198-unit bulk order for a 4-day
+  // shelf item like Brownie inflates batchRec by factor of (4 × adj) ≈ 4×.
   const c = cat(itemId); if(!c) return {needed:true, carry:0, daysLeft:0};
   const carry = getCarryForward(itemId, dateStr);
   const allE = S.logs.flatMap(l=>l.entries.filter(e=>e.id===itemId));
@@ -4026,10 +4031,37 @@ function needsBatchToday(itemId, dateStr){
     : 0;
   const stockoutMul = 1.10 + 0.30 * Math.min(1, Math.max(0, recentSoRate));
   const inferDemand = e => e.stockout ? (e.made||0) * stockoutMul : (e.sold||0);
+
+  // Spike-corrected observations (cascading).
+  const SPIKE_MULT = 2, SPIKE_WINDOW = 7, SPIKE_MIN_PRIOR = 4;
+  const obsAll = [];
+  for(let i = 0; i < allE.length; i++){
+    const e = allE[i];
+    if(e.stockout){
+      obsAll.push(inferDemand(e));
+      continue;
+    }
+    const prior = [];
+    for(let j = i - 1; j >= 0 && prior.length < SPIKE_WINDOW; j--){
+      if(!allE[j].stockout) prior.push(obsAll[j]);
+    }
+    if(prior.length < SPIKE_MIN_PRIOR){
+      obsAll.push(e.sold || 0);
+      continue;
+    }
+    const avgPrior = prior.reduce((a,b) => a + b, 0) / prior.length;
+    obsAll.push((e.sold || 0) > SPIKE_MULT * avgPrior ? avgPrior : (e.sold || 0));
+  }
   // Exclude "didn't offer" days (no made, no carry) — see itemSignal comment.
-  const offered = allE.filter(e => (e.made||0) > 0 || (e.carry_in||0) > 0);
-  const avgDemand = offered.length
-    ? offered.reduce((s,e)=>s+inferDemand(e),0)/offered.length
+  // NOTE: original code had `e.carry_in` here (snake_case) but allE entries use
+  // camelCase `carryIn`, so the check silently always returned false on the
+  // carry-only days, dropping legitimate sold-from-carry days out of the average.
+  // Fixed to `carryIn` here.
+  const offeredIdxs = allE
+    .map((e, i) => ({e, i}))
+    .filter(({e}) => (e.made||0) > 0 || (e.carryIn||0) > 0);
+  const avgDemand = offeredIdxs.length
+    ? offeredIdxs.reduce((s, {i}) => s + obsAll[i], 0) / offeredIdxs.length
     : 5;
   const daysLeft = avgDemand > 0 ? Math.floor(carry/avgDemand) : 99;
   // Need batch if carry covers < ~1 day of demand (10% safety buffer)
@@ -5252,7 +5284,7 @@ function startPreload(){
 <!-- Build version stamp (small, bottom-right). Tap to force a hard reload that
      bypasses the service worker cache — useful when investigating "why am I
      not seeing the new build" issues. The text is the BUILD_ID from sw.js. -->
-<div id="buildStamp" onclick="if(confirm('Force reload and clear cache? This will reload the page and fetch fresh files.')){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>{if(window.caches){caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(()=>location.reload(true));}else{location.reload(true);}});}else{location.reload(true);}}" style="position:fixed;bottom:6px;right:6px;font-size:9px;color:rgba(138,104,64,.45);font-family:monospace;z-index:9998;cursor:pointer;padding:3px 6px;-webkit-tap-highlight-color:transparent;user-select:none;">build a</div>
+<div id="buildStamp" onclick="if(confirm('Force reload and clear cache? This will reload the page and fetch fresh files.')){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>{if(window.caches){caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(()=>location.reload(true));}else{location.reload(true);}});}else{location.reload(true);}}" style="position:fixed;bottom:6px;right:6px;font-size:9px;color:rgba(138,104,64,.45);font-family:monospace;z-index:9998;cursor:pointer;padding:3px 6px;-webkit-tap-highlight-color:transparent;user-select:none;">build b</div>
 
 </body>
 </html>
