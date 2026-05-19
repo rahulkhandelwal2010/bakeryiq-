@@ -3,12 +3,7 @@
 //           Cache-first for assets (fonts, icons — rarely change)
 //           Never cache Supabase API calls
 
-// ⚠️  BUMP THIS ON EVERY DEPLOY — controls cache-busting for the PWA.
-//     Format: YYYY-MM-DD-x (use a/b/c for multiple deploys on the same day).
-//     Changing this constant changes sw.js bytes, which is what triggers
-//     the browser to re-activate the service worker and rebuild the cache.
-const BUILD_ID = '2026-04-28-ab';
-const CACHE = 'chabua-' + BUILD_ID;
+const CACHE = 'chabua-v17';
 
 // Install — skip waiting so new SW activates immediately
 self.addEventListener('install', e => {
