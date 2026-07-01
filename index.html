@@ -1674,6 +1674,14 @@ function restoreDraft(){
     const currentDate = document.getElementById('logDate')?.value;
     if(!date || date !== currentDate) return false; // date changed — skip
     F = savedF || {};
+    // Carry-forward is NOT operator-entered data — it's derived from FIFO history.
+    // A draft can be stale (saved when earlier days had different data), so never
+    // trust its stored cf. Recompute cf fresh from current history for every row;
+    // keep only the operator's actual made/sold inputs from the draft.
+    Object.keys(F).forEach(id=>{
+      if(!cat(id)) return;
+      F[id].cf = getCarryForward(id, currentDate);
+    });
     // Re-render all rows
     Object.keys(F).forEach(id=>{
       if(cat(id)) renderTableRow(id);
@@ -5353,7 +5361,7 @@ function startPreload(){
 <!-- Build version stamp (small, bottom-right). Tap to force a hard reload that
      bypasses the service worker cache — useful when investigating "why am I
      not seeing the new build" issues. The text is the BUILD_ID from sw.js. -->
-<div id="buildStamp" onclick="if(confirm('Force reload and clear cache? This will reload the page and fetch fresh files.')){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>{if(window.caches){caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(()=>location.reload(true));}else{location.reload(true);}});}else{location.reload(true);}}" style="position:fixed;bottom:6px;right:6px;font-size:9px;color:rgba(138,104,64,.45);font-family:monospace;z-index:9998;cursor:pointer;padding:3px 6px;-webkit-tap-highlight-color:transparent;user-select:none;">build d</div>
+<div id="buildStamp" onclick="if(confirm('Force reload and clear cache? This will reload the page and fetch fresh files.')){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>{if(window.caches){caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(()=>location.reload(true));}else{location.reload(true);}});}else{location.reload(true);}}" style="position:fixed;bottom:6px;right:6px;font-size:9px;color:rgba(138,104,64,.45);font-family:monospace;z-index:9998;cursor:pointer;padding:3px 6px;-webkit-tap-highlight-color:transparent;user-select:none;">build e</div>
 
 </body>
 </html>
