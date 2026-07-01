@@ -1752,7 +1752,17 @@ function getCarryForward(itemId, dateStr){
 
     const logDate = log.date;
 
-    // Add new batch if made > 0 (no intermediate expiry — calendar handles it)
+    // ── INTERMEDIATE EXPIRY (critical) ──
+    // Before processing this day, drop any batch that has already expired as of
+    // THIS day. Without this, expired stock lingers in the FIFO queue and gets
+    // consumed by later days' sales — which lets newer batches survive that
+    // should have been sold. That produced phantom carry (e.g. a sold-out day
+    // leaving stock behind), inflating carry-forward to the previous day's
+    // "made" value. Expiring per-day mirrors reality: yesterday's unsold bread
+    // is gone before today's sales happen.
+    batches = batches.filter(b => daysBetween(b.bakedOn, logDate) < shelfDays);
+
+    // Add new batch if made > 0
     if(e.made > 0){
       batches.push({qty: e.made, bakedOn: logDate});
     }
@@ -1857,6 +1867,9 @@ function getExpiringToday(dateStr){
     for(const log of priorLogs){
       const e = log.entries.find(x => x.id === c.id);
       if(!e) continue;
+      // Expire batches that are already dead as of this day BEFORE selling,
+      // so expired stock can't wrongly absorb later sales (see getCarryForward).
+      batches = batches.filter(b => daysBetween(b.bakedOn, log.date) < shelfDays);
       // Add new batch from today's production
       if(e.made > 0) batches.push({qty: e.made, bakedOn: log.date});
       // Sell FIFO from oldest
@@ -5361,12 +5374,7 @@ function startPreload(){
 <!-- Build version stamp (small, bottom-right). Tap to force a hard reload that
      bypasses the service worker cache — useful when investigating "why am I
      not seeing the new build" issues. The text is the BUILD_ID from sw.js. -->
-<div id="buildStamp" onclick="if(confirm('Force reload and clear cache? This will reload the page and fetch fresh files.')){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>{if(window.caches){caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(()=>location.reload(true));}else{location.reload(true);}});}else{location.reload(true);}}" style="position:fixed;bottom:6px;right:6px;font-size:9px;color:rgba(138,104,64,.45);font-family:monospace;z-index:9998;cursor:pointer;padding:3px 6px;-webkit-tap-highlight-color:transparent;user-select:none;">build f</div>
-<button onclick="(function(){try{var t=document.getElementById('logDate')&&document.getElementById('logDate').value||new Date().toISOString().split('T')[0];var atta='i1777280935735';var l30=(S.logs||[]).find(function(x){return x.date==='2026-06-30';});var e30=l30&&l30.entries.find(function(x){return x.id===atta;});var draft=localStorage.getItem('chabua_draft');var out='=== DEBUG ===\\n';out+='logDate field: '+t+'\\n';out+='device today: '+new Date().toISOString().split('T')[0]+'\\n\\n';out+='June30 Atta in S.logs:\\n';out+=e30?JSON.stringify(e30):'NOT FOUND';out+='\\n\\ngetCarryForward(Atta, '+t+') = '+getCarryForward(atta,t)+'\\n';out+='getCarryForward(Atta, 2026-07-01) = '+getCarryForward(atta,'2026-07-01')+'\\n\\n';out+='F[Atta] in form: '+(typeof F!=='undefined'&&F[atta]?JSON.stringify(F[atta]):'not in form')+'\\n\\n';out+='draft exists: '+(draft?'YES':'no')+'\\n';if(draft){var d=JSON.parse(draft);out+='draft date: '+d.date+'\\n';out+='draft Atta: '+(d.F&&d.F[atta]?JSON.stringify(d.F[atta]):'not in draft')+'\\n';}out+='\\ngetCarryForward source has subtract: '+(getCarryForward.toString().indexOf('toSell -= b.qty')>-1?'YES':'NO');document.getElementById('dbgOut').textContent=out;document.getElementById('dbgPanel').style.display='block';}catch(err){document.getElementById('dbgOut').textContent='ERR: '+err.message;document.getElementById('dbgPanel').style.display='block';}})()" style="position:fixed;bottom:6px;left:6px;font-size:11px;background:#c0392b;color:#fff;border:none;border-radius:6px;z-index:9998;padding:6px 10px;font-family:monospace;">🐞 DEBUG</button>
-<div id="dbgPanel" style="display:none;position:fixed;inset:20px;background:#fff;border:3px solid #c0392b;border-radius:10px;z-index:99999;padding:14px;overflow:auto;box-shadow:0 8px 40px rgba(0,0,0,.4);">
-  <button onclick="document.getElementById('dbgPanel').style.display='none'" style="position:absolute;top:8px;right:8px;background:#333;color:#fff;border:none;border-radius:6px;padding:6px 12px;">Close</button>
-  <pre id="dbgOut" style="font-family:monospace;font-size:12px;white-space:pre-wrap;word-break:break-word;margin-top:30px;color:#111;"></pre>
-</div>
+<div id="buildStamp" onclick="if(confirm('Force reload and clear cache? This will reload the page and fetch fresh files.')){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>{if(window.caches){caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(()=>location.reload(true));}else{location.reload(true);}});}else{location.reload(true);}}" style="position:fixed;bottom:6px;right:6px;font-size:9px;color:rgba(138,104,64,.45);font-family:monospace;z-index:9998;cursor:pointer;padding:3px 6px;-webkit-tap-highlight-color:transparent;user-select:none;">build g</div>
 
 </body>
 </html>
