@@ -1701,7 +1701,7 @@ function clearDraft(){
 }
 
 function initLogDate(){
-  const d = new Date().toISOString().split('T')[0];
+  const d = localToday();
   document.getElementById('logDate').value = d;
 }
 
@@ -1853,7 +1853,7 @@ function recomputeCarryForward(){
  * @returns Array<{item, qty, ageDays, shelfDays}>
  */
 function getExpiringToday(dateStr){
-  if(!dateStr) dateStr = new Date().toISOString().split('T')[0];
+  if(!dateStr) dateStr = localToday();
   const expiring = [];
 
   S.catalog.filter(c=>c.active).forEach(c=>{
@@ -1915,7 +1915,7 @@ function daysAgo(dateStr, n){
   const d = new Date(dateStr + 'T00:00:00');
   if(isNaN(d.getTime())) return '';
   d.setDate(d.getDate() - n);
-  return d.toISOString().split('T')[0];
+  return fmtLocal(d);
 }
 
 // Helper: count calendar days between two date strings
@@ -1925,6 +1925,30 @@ function daysBetween(fromStr, toStr){
   const b = new Date(toStr + 'T00:00:00');
   if(isNaN(a.getTime())||isNaN(b.getTime())) return 0;
   return Math.round((b - a) / 86400000);
+}
+
+// Returns TODAY's date (YYYY-MM-DD) in the user's LOCAL timezone.
+// IMPORTANT: do NOT use `new Date().toISOString().split('T')[0]` for "today" —
+// toISOString() converts to UTC, so for users east of UTC (e.g. India, UTC+5:30)
+// any time before the UTC offset (before ~5:30am local) reports YESTERDAY's date.
+// A bakery opening early would get the wrong log date, wrong "expiring today", and
+// an off-by-one plan. This builds the date from local calendar fields instead.
+function localToday(){
+  return fmtLocal(new Date());
+}
+
+// Formats a Date OBJECT as YYYY-MM-DD using LOCAL calendar fields (not UTC).
+// Use this instead of `someDate.toISOString().split('T')[0]` whenever the Date
+// was built from a local-midnight parse (`new Date('YYYY-MM-DDT00:00:00')`) and
+// then offset with setDate(). toISOString() would shift the result by the UTC
+// offset (e.g. IST +5:30 makes local midnight fall on the previous UTC day),
+// producing an off-by-one date for users east of UTC.
+function fmtLocal(d){
+  if(!(d instanceof Date) || isNaN(d.getTime())) return '';
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 /**
@@ -1953,7 +1977,7 @@ function computeItemWaste(itemId, asOfDate, windowDays){
   const c = cat(itemId);
   if(!c) return null;
   const shelfDays = c.shelfDays || 1;
-  const asOf = asOfDate || new Date().toISOString().split('T')[0];
+  const asOf = asOfDate || localToday();
 
   // Logs for this item that may have any sold / made / expired event,
   // ordered oldest first. Include logs ≤ asOf only.
@@ -1967,7 +1991,7 @@ function computeItemWaste(itemId, asOfDate, windowDays){
     if(!windowDays || windowDays <= 0) return priorLogs[0].date;
     const d = new Date(asOf + 'T00:00:00');
     d.setDate(d.getDate() - (windowDays - 1));
-    return d.toISOString().split('T')[0];
+    return fmtLocal(d);
   })();
 
   let batches = []; // [{qty, bakedOn}]
@@ -2969,7 +2993,7 @@ function intel(itemId){
   // Anchor `today` to the latest log date (not wall-clock today). Without this,
   // a user who hasn't logged for 7+ days sees in-flight stock at the end of the
   // last log charged as expired, falsely shifting signals toward "overstock".
-  const today = (L.length ? L[L.length-1].date : new Date().toISOString().split('T')[0]);
+  const today = (L.length ? L[L.length-1].date : localToday());
   const wAll = computeItemWaste(itemId, today, null);  // null = all history
   const sellRate = wAll && wAll.trueSellRate !== null
     ? wAll.trueSellRate
@@ -3359,7 +3383,7 @@ function renderInsightCards(intels){
 
 function computeWasteData(windowDays){
   // Returns per-item waste over the window, plus aggregates.
-  const today = S.logs.length ? S.logs[S.logs.length-1].date : new Date().toISOString().split('T')[0];
+  const today = S.logs.length ? S.logs[S.logs.length-1].date : localToday();
   const items = S.catalog.filter(c => c.active).map(c => {
     const w = computeItemWaste(c.id, today, windowDays);
     if(!w || w.expired === 0) return null;
@@ -3398,7 +3422,7 @@ function renderWasteSummary(){
   const tomorrow = (() => {
     const d = new Date(data.today + 'T00:00:00');
     d.setDate(d.getDate() + 1);
-    return d.toISOString().split('T')[0];
+    return fmtLocal(d);
   })();
   const expiringTomorrow = getExpiringToday(tomorrow);
   const expiringTomorrowQty = expiringTomorrow.reduce((s,e) => s + (e.qty || 0), 0);
@@ -3510,7 +3534,7 @@ async function renderAccuracyCard(){
   card.style.display = 'block';
 
   // Bucket helper
-  const today = new Date().toISOString().split('T')[0];
+  const today = localToday();
   const cutoff = (days) => {
     const d = new Date(today + 'T00:00:00Z');
     d.setUTCDate(d.getUTCDate() - days);
@@ -3738,7 +3762,7 @@ function renderWasteTrend(){
   for(let i = WINDOW_DAYS - 1; i >= 0; i--){
     const d = new Date(today + 'T00:00:00');
     d.setDate(d.getDate() - i);
-    dates.push(d.toISOString().split('T')[0]);
+    dates.push(fmtLocal(d));
   }
 
   // For each item: per-day expired count. Tricky bit: computeItemWaste over
@@ -3762,7 +3786,7 @@ function renderWasteTrend(){
     const todayD = new Date(today + 'T00:00:00');
     const allDays = [];
     while(cursor <= todayD){
-      const ds = cursor.toISOString().split('T')[0];
+      const ds = fmtLocal(cursor);
       const w = computeItemWaste(c.id, ds, null);
       const expToday = w ? w.expired : 0;
       allDays.push({date: ds, expired: expToday - prevExpired});
@@ -3907,7 +3931,7 @@ function itemSignal(itemId, dow){
   // when the user hasn't logged for several days, in-flight stock from the
   // most recent log gets charged as expired against the wall-clock asOf,
   // falsely tipping signals toward "overstock".
-  const todayStr = L.length ? L[L.length-1].date : new Date().toISOString().split('T')[0];
+  const todayStr = L.length ? L[L.length-1].date : localToday();
   const w7 = computeItemWaste(c.id, todayStr, 7);
   const totalMade7 = last7.reduce((s,e)=>s+e.made, 0);  // kept for callers/UI
   const sellRate7 = (w7 && w7.trueSellRate !== null)
@@ -4168,7 +4192,7 @@ function genDaily(){
   document.getElementById('de').style.display='none';
   document.getElementById('db').style.display='block';
 
-  const dateStr = document.getElementById('logDate')?.value || new Date().toISOString().split('T')[0];
+  const dateStr = document.getElementById('logDate')?.value || localToday();
   const tomorrow = daysAgo(dateStr, -1);
 
   const makeRows=[], skipRows=[], flagRows=[];
@@ -4352,7 +4376,7 @@ function delLog(d){
 function exportData(){
   const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(b);
-  a.download='bakeryiq-'+new Date().toISOString().split('T')[0]+'.json';a.click();
+  a.download='bakeryiq-'+localToday()+'.json';a.click();
 }
 function importData(ev){
   const f=ev.target.files[0];if(!f)return;
@@ -4590,7 +4614,7 @@ function renderRevenue(){
   // ── DAILY BAR CHART (last 30 days) ──
   const last30=[...dayRevs].slice(-30);
   const mxR=Math.max(...last30.map(d=>d.rev),1);
-  const todayStr=new Date().toISOString().split('T')[0];
+  const todayStr=localToday();
   document.getElementById('rev-daily-chart').innerHTML=`
     <div style="display:flex;align-items:flex-end;gap:3px;height:80px;margin-bottom:6px;">
       ${last30.map(d=>{
@@ -4952,7 +4976,7 @@ function renderCatalogMobile(){
 function checkAndShowExpiring(){
   // Small delay so main app renders first
   setTimeout(()=>{
-    const today = new Date().toISOString().split('T')[0];
+    const today = localToday();
     const expiring = getExpiringToday(today);
     if(!expiring.length) return;  // nothing expiring today, skip
 
@@ -5023,7 +5047,7 @@ function renderCalendar(){
   const lastDate = new Date(_calYear, _calMonth + 1, 0).getDate();
   // Today's string for comparison
   const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
+  const todayStr = fmtLocal(today);
   const todayYr = today.getFullYear(), todayMo = today.getMonth(), todayDy = today.getDate();
 
   // Build a Set of logged dates for this month (fast lookup)
@@ -5374,7 +5398,7 @@ function startPreload(){
 <!-- Build version stamp (small, bottom-right). Tap to force a hard reload that
      bypasses the service worker cache — useful when investigating "why am I
      not seeing the new build" issues. The text is the BUILD_ID from sw.js. -->
-<div id="buildStamp" onclick="if(confirm('Force reload and clear cache? This will reload the page and fetch fresh files.')){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>{if(window.caches){caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(()=>location.reload(true));}else{location.reload(true);}});}else{location.reload(true);}}" style="position:fixed;bottom:6px;right:6px;font-size:9px;color:rgba(138,104,64,.45);font-family:monospace;z-index:9998;cursor:pointer;padding:3px 6px;-webkit-tap-highlight-color:transparent;user-select:none;">build g</div>
+<div id="buildStamp" onclick="if(confirm('Force reload and clear cache? This will reload the page and fetch fresh files.')){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>{if(window.caches){caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(()=>location.reload(true));}else{location.reload(true);}});}else{location.reload(true);}}" style="position:fixed;bottom:6px;right:6px;font-size:9px;color:rgba(138,104,64,.45);font-family:monospace;z-index:9998;cursor:pointer;padding:3px 6px;-webkit-tap-highlight-color:transparent;user-select:none;">build h</div>
 
 </body>
 </html>
