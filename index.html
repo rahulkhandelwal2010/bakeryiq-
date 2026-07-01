@@ -1334,6 +1334,18 @@ async function load(){
       entries:(l.bakeryiq_log_entries||[]).map(e=>({id:e.item_id, made:e.made, sold:e.sold,
         carryIn:e.carry_in, stockout:e.stockout}))}));
 
+    // ── LIVE CARRY-FORWARD RECOMPUTE ──
+    // The stored carry_in / stockout columns are SNAPSHOTS taken when each day
+    // was first saved. If an earlier day is later edited (fix a typo, fill a
+    // gap), every following day's snapshot goes stale — the FIFO carry changes
+    // but the frozen column doesn't. Audits showed ~57% of stored carry_in
+    // values drifted this way. To fix everything downstream at once, we discard
+    // the stored snapshots and recompute carryIn + stockout live from the full
+    // (now-loaded, date-sorted) history using the same FIFO logic the planner
+    // already trusts. The DB column is left untouched (raw record preserved);
+    // the app simply never trusts it again.
+    recomputeCarryForward();
+
     // Refresh the server snapshot so save() can compute correct diffs.
     _snapshotFromDb(settings||[], catalog||[], logs||[]);
   }catch(e){
@@ -1761,6 +1773,61 @@ function getCarryForward(itemId, dateStr){
 }
 
 /**
+ * Live-recompute carryIn and stockout for EVERY log entry in S.logs, using the
+ * same FIFO batch-expiry logic as getCarryForward. Overwrites the stale stored
+ * snapshots in memory (the DB column is left as-is — raw record preserved).
+ *
+ * Why in-place per-item walk instead of calling getCarryForward per entry:
+ *   getCarryForward re-walks all prior logs on every call — O(n²) across a full
+ *   recompute. Here we walk each item's timeline once (O(n)) and read the
+ *   start-of-day batch total directly, which is exactly what carryIn means.
+ *
+ * carryIn(day)  = sum of non-expired batch remainders at START of that day
+ * stockout(day) = sold >= (carryIn + made) AND (carryIn + made) > 0
+ *                 (i.e., everything available was sold — same rule as saveDay)
+ */
+function recomputeCarryForward(){
+  // Group entries by item, each with a back-reference to its entry object so we
+  // can mutate carryIn/stockout in place.
+  const byItem = new Map(); // itemId -> [{date, entry}]
+  const sortedLogs = S.logs.slice().sort((a,b)=>a.date.localeCompare(b.date));
+  for(const log of sortedLogs){
+    for(const e of log.entries){
+      if(!byItem.has(e.id)) byItem.set(e.id, []);
+      byItem.get(e.id).push({date: log.date, entry: e});
+    }
+  }
+
+  for(const [itemId, rows] of byItem){
+    const c = cat(itemId);
+    const shelfDays = (c && c.shelfDays) || 1;
+    let batches = []; // [{qty, bakedOn}]
+    for(const {date, entry} of rows){
+      // 1. Expire batches older than shelfDays as of THIS day (start of day)
+      batches = batches.filter(b => daysBetween(b.bakedOn, date) < shelfDays);
+      // 2. Start-of-day carry = surviving batch total (this is carryIn)
+      const carryIn = batches.reduce((s,b)=>s+b.qty, 0);
+      const made = entry.made || 0;
+      const sold = entry.sold || 0;
+      const avail = carryIn + made;
+      // 3. Overwrite in-memory snapshot with live-derived values
+      entry.carryIn = carryIn;
+      entry.stockout = avail > 0 && sold >= avail;
+      // 4. Add today's bake as a new batch, then sell FIFO (oldest first)
+      if(made > 0) batches.push({qty: made, bakedOn: date});
+      let toSell = sold;
+      const nb = [];
+      for(const b of batches){
+        if(toSell <= 0){ nb.push(b); continue; }
+        if(toSell >= b.qty){ toSell -= b.qty; }
+        else { nb.push({qty: b.qty - toSell, bakedOn: b.bakedOn}); toSell = 0; }
+      }
+      batches = nb;
+    }
+  }
+}
+
+/**
  * Returns items expiring today — i.e., their oldest batch is on its LAST day of shelf life.
  * Example: 2-day shelf item baked yesterday → today is its last day → returns it.
  * Excludes items where nothing is expiring today.
@@ -2058,7 +2125,9 @@ function enterLogEditMode(){
     F[e.item_id || e.id] = {
       made: e.made || 0,
       sold: e.sold || 0,
-      cf:   e.carry_in != null ? e.carry_in : (e.carryIn || 0)
+      // e.carryIn is the live FIFO-recomputed value (see recomputeCarryForward).
+      // Fall back to snake_case only for any raw shape that slipped through.
+      cf:   e.carryIn != null ? e.carryIn : (e.carry_in || 0)
     };
   });
   // Render rows
@@ -4092,11 +4161,7 @@ function genDaily(){
       flagRows.push({c, sig}); return;
     }
 
-    if(c.shelfDays >= 2){
-      // Bulk-batch path: applies to ALL items with shelf life >= 2 days.
-      // FIFO carry-forward (getCarryForward) is shelf-day-aware, so even
-      // 2-day items get correct age-respecting skip/bake decisions.
-      // The fresh-item daily-bake path (else branch below) is now unused.
+    if(c.shelfDays >= 3){
       const batch = needsBatchToday(c.id, tomorrow);
       if(!batch.needed && sig.phase !== 'learning'){
         // Skip — enough carry
@@ -5288,7 +5353,7 @@ function startPreload(){
 <!-- Build version stamp (small, bottom-right). Tap to force a hard reload that
      bypasses the service worker cache — useful when investigating "why am I
      not seeing the new build" issues. The text is the BUILD_ID from sw.js. -->
-<div id="buildStamp" onclick="if(confirm('Force reload and clear cache? This will reload the page and fetch fresh files.')){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>{if(window.caches){caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(()=>location.reload(true));}else{location.reload(true);}});}else{location.reload(true);}}" style="position:fixed;bottom:6px;right:6px;font-size:9px;color:rgba(138,104,64,.45);font-family:monospace;z-index:9998;cursor:pointer;padding:3px 6px;-webkit-tap-highlight-color:transparent;user-select:none;">build c</div>
+<div id="buildStamp" onclick="if(confirm('Force reload and clear cache? This will reload the page and fetch fresh files.')){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>{if(window.caches){caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(()=>location.reload(true));}else{location.reload(true);}});}else{location.reload(true);}}" style="position:fixed;bottom:6px;right:6px;font-size:9px;color:rgba(138,104,64,.45);font-family:monospace;z-index:9998;cursor:pointer;padding:3px 6px;-webkit-tap-highlight-color:transparent;user-select:none;">build d</div>
 
 </body>
 </html>
