@@ -1332,7 +1332,16 @@ async function load(){
       shelfDays:c.shelf_days, price:parseFloat(c.price)||0, active:c.active}));
     S.logs = (logs||[]).map(l=>({date:l.log_date, dow:l.day_of_week,
       entries:(l.bakeryiq_log_entries||[]).map(e=>({id:e.item_id, made:e.made, sold:e.sold,
-        carryIn:e.carry_in, stockout:e.stockout}))}));
+        carryIn:e.carry_in, stockout:e.stockout,
+        // Raw DB snapshot values, preserved for SYNC ONLY. recomputeCarryForward
+        // overwrites carryIn/stockout with live FIFO values for display and
+        // intelligence, but the sync must keep sending the RAW values back —
+        // otherwise every stale-carry log looks "changed", gets re-uploaded
+        // with recomputed carry, and can violate the DB check constraint
+        // sold <= made + carry_in on days where reality outsold the FIFO model.
+        // Principle: DB columns are the raw record; the app never trusts them
+        // but also never rewrites them.
+        carryInRaw:e.carry_in, stockoutRaw:e.stockout}))}));
 
     // ── LIVE CARRY-FORWARD RECOMPUTE ──
     // The stored carry_in / stockout columns are SNAPSHOTS taken when each day
@@ -1538,7 +1547,14 @@ async function saveAll(){
   // Cap at last 200 logs to bound work, like the old code.
   for(const log of S.logs.slice(-200)){
     const desiredEntries = (log.entries||[]).map(e => ({
-      id: e.id, made: e.made||0, sold: e.sold||0, carryIn: e.carryIn||0, stockout: !!e.stockout
+      // Prefer the RAW DB values for sync/hash. Entries the user actually
+      // created or edited this session have no *Raw fields (saveDay strips
+      // them), so those use their current values and sync normally. Untouched
+      // historical entries keep their raw snapshot → hash matches server →
+      // skipped → history is never rewritten.
+      id: e.id, made: e.made||0, sold: e.sold||0,
+      carryIn: (e.carryInRaw !== undefined ? e.carryInRaw : e.carryIn)||0,
+      stockout: !!(e.stockoutRaw !== undefined ? e.stockoutRaw : e.stockout)
     }));
     const desiredEntryHash = _entriesHash(desiredEntries);
     const srv = _srvLogs.get(log.date);
@@ -5398,7 +5414,7 @@ function startPreload(){
 <!-- Build version stamp (small, bottom-right). Tap to force a hard reload that
      bypasses the service worker cache — useful when investigating "why am I
      not seeing the new build" issues. The text is the BUILD_ID from sw.js. -->
-<div id="buildStamp" onclick="if(confirm('Force reload and clear cache? This will reload the page and fetch fresh files.')){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>{if(window.caches){caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(()=>location.reload(true));}else{location.reload(true);}});}else{location.reload(true);}}" style="position:fixed;bottom:6px;right:6px;font-size:9px;color:rgba(138,104,64,.45);font-family:monospace;z-index:9998;cursor:pointer;padding:3px 6px;-webkit-tap-highlight-color:transparent;user-select:none;">build i</div>
+<div id="buildStamp" onclick="if(confirm('Force reload and clear cache? This will reload the page and fetch fresh files.')){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>{if(window.caches){caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(()=>location.reload(true));}else{location.reload(true);}});}else{location.reload(true);}}" style="position:fixed;bottom:6px;right:6px;font-size:9px;color:rgba(138,104,64,.45);font-family:monospace;z-index:9998;cursor:pointer;padding:3px 6px;-webkit-tap-highlight-color:transparent;user-select:none;">build j</div>
 
 </body>
 </html>
