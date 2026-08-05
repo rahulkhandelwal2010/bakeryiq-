@@ -1148,6 +1148,17 @@ body.viewer-mode textarea{
       </table></div>
       <div class="plan-mobile-view" id="planSkipMobile"></div>
     </div>
+    <!-- OCCASIONAL -->
+    <div class="card" id="plan-occ-card" style="display:none;">
+      <details>
+        <summary style="cursor:pointer;font-weight:700;color:var(--mu);font-size:.9rem;" id="plan-occ-summary">🕐 Occasional items</summary>
+        <p class="cs" style="margin-top:8px;">Not in your regular rotation for this weekday — quantities ready if you decide to bake. Baking (or selling) one moves it back to the main list automatically.</p>
+        <div class="tw"><table>
+          <thead><tr><th>Item</th><th>Qty if baking</th><th>Why here</th></tr></thead>
+          <tbody id="planOccBody"></tbody>
+        </table></div>
+      </details>
+    </div>
     <!-- FLAGGED -->
     <div class="card" id="plan-flag-card" style="display:none;">
       <div class="ct">⚠️ Review These Items</div>
@@ -4214,6 +4225,53 @@ function needsBatchToday(itemId, dateStr){
   return {needed, carry, daysLeft, avgDemand};
 }
 
+// ── PLAN PRESENCE (tiering) ──
+// Regularity: how often is this item actually baked? Weekday-specific over the
+// last 8 same-weekday logged days; global over the last 28 logged days.
+function bakeRegularity(itemId, dow){
+  const dowLogs = S.logs.filter(l=>l.dow===dow).slice(-8);
+  const wN = dowLogs.length;
+  const wBaked = dowLogs.filter(l=>l.entries.some(e=>e.id===itemId && (e.made||0)>0)).length;
+  const recent = S.logs.slice(-28);
+  const gBaked = recent.filter(l=>l.entries.some(e=>e.id===itemId && (e.made||0)>0)).length;
+  return {weekdayRate: wN ? wBaked/wN : 0, weekdayN: wN,
+          globalRate: recent.length ? gBaked/recent.length : 0};
+}
+// Demand evidence veto: recent sales (even from carry) or a sellout on the
+// last offered day force an item into "Bake today" regardless of bake
+// regularity — customers buying it outranks us not baking it. This is the
+// exit ramp that prevents the not-shown → not-baked → never-shown loop.
+function recentDemandEvidence(itemId){
+  // Recurring demand: sold on at least 3 of the last 10 logged days. A single
+  // stray sale isn't enough to force shelf presence, but a sellout on the most
+  // recent offered day always is.
+  const last10 = S.logs.slice(-10);
+  const soldDays = last10.filter(l=>l.entries.some(e=>e.id===itemId && (e.sold||0)>0)).length;
+  if(soldDays >= 3) return true;
+  for(let i=S.logs.length-1;i>=0;i--){
+    const e = S.logs[i].entries.find(x=>x.id===itemId);
+    if(e && ((e.made||0)>0 || (e.sold||0)>0)) return !!e.stockout;
+  }
+  return false;
+}
+// Tier decision, in precedence order: explicit flags (dailyFresh) and
+// learning-phase items always show; then demand evidence; then regularity
+// (baked on ≥50% of recent same weekdays, or ≥50% of recent days overall
+// when weekday history is thin).
+function planTier(c, sig, dow){
+  if(c.dailyFresh) return 'today';
+  if(sig.phase==='learning'){
+    // Genuinely new items being introduced (some history) belong in today's
+    // plan; catalog entries never logged at all sit in Occasional until used.
+    const everLogged = S.logs.some(l=>l.entries.some(e=>e.id===c.id));
+    return everLogged ? 'today' : 'occasional';
+  }
+  if(recentDemandEvidence(c.id)) return 'today';
+  const reg = bakeRegularity(c.id, dow);
+  const regular = reg.weekdayN >= 3 ? reg.weekdayRate >= 0.5 : reg.globalRate >= 0.5;
+  return regular ? 'today' : 'occasional';
+}
+
 function genDaily(){
   const dow = +document.getElementById('pd').value;
   if(S.logs.length < 2){
@@ -4226,7 +4284,7 @@ function genDaily(){
   const dateStr = document.getElementById('logDate')?.value || localToday();
   const tomorrow = daysAgo(dateStr, -1);
 
-  const makeRows=[], skipRows=[], flagRows=[];
+  const makeRows=[], skipRows=[], flagRows=[], occRows=[];
   let grandTotal=0;
 
   S.catalog.filter(c=>c.active).forEach(c=>{
@@ -4303,7 +4361,12 @@ function genDaily(){
         sig.reason = carry > 0
           ? sig.reason + ` (−${carry} carry)`
           : sig.reason;
-        if(netRec > 0){ makeRows.push({c, sig, isBatch:false}); grandTotal+=netRec; }
+        if(netRec > 0){
+          if(planTier(c, sig, dow) === 'occasional'){
+            const reg = bakeRegularity(c.id, dow);
+            occRows.push({c, sig, why:`baked ${Math.round(reg.weekdayRate*100)}% of recent ${DAYSF[dow]}s`});
+          } else { makeRows.push({c, sig, isBatch:false}); grandTotal+=netRec; }
+        }
         else { skipRows.push({c, carry, daysLeft:'today only (fresh)', nextBatch:'Tomorrow'}); }
       }
     }
@@ -4339,6 +4402,18 @@ function genDaily(){
       <td style="color:var(--bl);font-weight:700">${carry} units</td>
       <td style="color:var(--mu);font-size:.78rem">${daysLeft}</td>
       <td style="font-size:.75rem;color:var(--mu)">${nextBatch}</td>
+    </tr>`).join('');
+
+  // ── RENDER OCCASIONAL SECTION ──
+  const occCard = document.getElementById('plan-occ-card');
+  occCard.style.display = occRows.length ? 'block' : 'none';
+  document.getElementById('plan-occ-summary').textContent =
+    `🕐 Occasional items (${occRows.length}) — bake when you choose`;
+  document.getElementById('planOccBody').innerHTML = occRows.map(({c,sig,why})=>`
+    <tr>
+      <td style="font-weight:700">${c.name}</td>
+      <td style="font-weight:700;color:var(--mu)">${sig.rec}</td>
+      <td style="font-size:.72rem;color:var(--mu)">${why}</td>
     </tr>`).join('');
 
   // ── RENDER FLAG SECTION ──
@@ -5460,7 +5535,7 @@ function startPreload(){
 <!-- Build version stamp (small, bottom-right). Tap to force a hard reload that
      bypasses the service worker cache — useful when investigating "why am I
      not seeing the new build" issues. The text is the BUILD_ID from sw.js. -->
-<div id="buildStamp" onclick="if(confirm('Force reload and clear cache? This will reload the page and fetch fresh files.')){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>{if(window.caches){caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(()=>location.reload(true));}else{location.reload(true);}});}else{location.reload(true);}}" style="position:fixed;bottom:6px;right:6px;font-size:9px;color:rgba(138,104,64,.45);font-family:monospace;z-index:9998;cursor:pointer;padding:3px 6px;-webkit-tap-highlight-color:transparent;user-select:none;">build l</div>
+<div id="buildStamp" onclick="if(confirm('Force reload and clear cache? This will reload the page and fetch fresh files.')){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>{if(window.caches){caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(()=>location.reload(true));}else{location.reload(true);}});}else{location.reload(true);}}" style="position:fixed;bottom:6px;right:6px;font-size:9px;color:rgba(138,104,64,.45);font-family:monospace;z-index:9998;cursor:pointer;padding:3px 6px;-webkit-tap-highlight-color:transparent;user-select:none;">build m</div>
 
 </body>
 </html>
