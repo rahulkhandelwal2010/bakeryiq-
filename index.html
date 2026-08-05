@@ -4014,13 +4014,21 @@ function itemSignal(itemId, dow){
     return recent.filter(e=>e.stockout).length / recent.length;
   })();
   const stockoutMul = 1.10 + 0.30 * Math.min(1, Math.max(0, recentSoRate));
-  const inferDemand = e => e.stockout ? (e.made||0) * stockoutMul : (e.sold||0);
-  // Exclude "didn't offer" days from demand estimation. If the bakery didn't
-  // bake AND had no carry, sold=0 isn't a demand signal — we never tested it.
-  // Counting these as zero-demand days drags the average down and creates a
-  // self-reinforcing loop (low estimate → recommend less → made=0 again →
-  // estimate stays low). The check: nothing was on the shelf to sell.
-  const wasOffered = e => (e.made||0) > 0 || (e.carryIn||0) > 0;
+  // Stockout inference: demand exceeded AVAILABILITY (made + carry), not just
+  // what was baked. `made` alone undercounts sellouts fed by carry — e.g.
+  // made 6, carry 14, sold 20 (sellout) was credited as ~7 demand instead of
+  // 20+. Never infer below what actually sold.
+  const inferDemand = e => e.stockout
+    ? Math.max((e.sold||0), ((e.made||0) + (e.carryIn||0)) * stockoutMul)
+    : (e.sold||0);
+  // A day counts as a demand OBSERVATION only if we baked (made>0) or actually
+  // sold something (sold>0). made=0 & sold=0 days are unknowable: the FIFO
+  // model may believe carry sat on the shelf, but in practice day-old stock on
+  // no-bake days is often not displayed at all (closed days, item not put out).
+  // Counting those as "demand = 0" dragged averages down ~20-25% for items
+  // baked only a few times a week. Days that sold from carry (made=0, sold>0)
+  // still count — that's real demand evidence.
+  const wasOffered = e => (e.made||0) > 0 || (e.sold||0) > 0;
 
   // ── BULK-ORDER SPIKE FILTER ──
   // Caterers/parties occasionally place one-time bulk orders. Without filtering,
@@ -4033,16 +4041,21 @@ function itemSignal(itemId, dow){
   // Stockout days bypass — stockoutMul already handles unmet demand there.
   // Requires >=4 prior non-stockout entries for a reliable baseline.
   const SPIKE_MULT = 2, SPIKE_WINDOW = 7, SPIKE_MIN_PRIOR = 4;
+  // CRITICAL: the cascade runs over OBSERVATION days only (made>0 || sold>0).
+  // If non-observation zero days entered the baseline, a run of no-bake days
+  // would drag the prior-7 average toward 0 and legitimate 13–15-sold days
+  // would be falsely "spike"-capped down to ~3–6, suppressing demand ~40%.
+  const obsE = allE.filter(wasOffered);
   const obsAll = [];
-  for(let i = 0; i < allE.length; i++){
-    const e = allE[i];
+  for(let i = 0; i < obsE.length; i++){
+    const e = obsE[i];
     if(e.stockout){
       obsAll.push(inferDemand(e));
       continue;
     }
     const prior = [];
     for(let j = i - 1; j >= 0 && prior.length < SPIKE_WINDOW; j--){
-      if(!allE[j].stockout) prior.push(obsAll[j]);
+      if(!obsE[j].stockout) prior.push(obsAll[j]);
     }
     if(prior.length < SPIKE_MIN_PRIOR){
       obsAll.push(e.sold || 0);
@@ -4053,19 +4066,14 @@ function itemSignal(itemId, dow){
   }
 
   // Demand estimate (weekday-specific if available), built from spike-corrected obs.
-  const dowIdxs = allE
+  const dowIdxs = obsE
     .map((e, i) => ({e, i}))
-    .filter(({e}) => e.dow === dow && wasOffered(e));
+    .filter(({e}) => e.dow === dow);
   const demEst = dowIdxs.length >= 2
     ? dowIdxs.reduce((s, {i}) => s + obsAll[i], 0) / dowIdxs.length
-    : (() => {
-        const offeredIdxs = allE
-          .map((e, i) => ({e, i}))
-          .filter(({e}) => wasOffered(e));
-        return offeredIdxs.length
-          ? offeredIdxs.reduce((s, {i}) => s + obsAll[i], 0) / offeredIdxs.length
-          : 0;
-      })();
+    : (obsAll.length
+        ? obsAll.reduce((a,b) => a + b, 0) / obsAll.length
+        : 0);
 
   // ── CONVERGENCE LOOP (Improvement B) ──
   // Did our previous bumps actually close the supply gap?
@@ -4160,20 +4168,27 @@ function needsBatchToday(itemId, dateStr){
     ? recent.filter(e=>e.stockout).length / recent.length
     : 0;
   const stockoutMul = 1.10 + 0.30 * Math.min(1, Math.max(0, recentSoRate));
-  const inferDemand = e => e.stockout ? (e.made||0) * stockoutMul : (e.sold||0);
+  // Stockout inference uses AVAILABILITY (made+carry), never below actual sold
+  // — see itemSignal comment.
+  const inferDemand = e => e.stockout
+    ? Math.max((e.sold||0), ((e.made||0) + (e.carryIn||0)) * stockoutMul)
+    : (e.sold||0);
 
-  // Spike-corrected observations (cascading).
+  // Spike-corrected observations (cascading), over OBSERVATION days only
+  // (made>0 || sold>0) — non-observation zero days must not enter the
+  // baseline or they falsely cap normal days (see itemSignal comment).
   const SPIKE_MULT = 2, SPIKE_WINDOW = 7, SPIKE_MIN_PRIOR = 4;
+  const obsE = allE.filter(e => (e.made||0) > 0 || (e.sold||0) > 0);
   const obsAll = [];
-  for(let i = 0; i < allE.length; i++){
-    const e = allE[i];
+  for(let i = 0; i < obsE.length; i++){
+    const e = obsE[i];
     if(e.stockout){
       obsAll.push(inferDemand(e));
       continue;
     }
     const prior = [];
     for(let j = i - 1; j >= 0 && prior.length < SPIKE_WINDOW; j--){
-      if(!allE[j].stockout) prior.push(obsAll[j]);
+      if(!obsE[j].stockout) prior.push(obsAll[j]);
     }
     if(prior.length < SPIKE_MIN_PRIOR){
       obsAll.push(e.sold || 0);
@@ -4182,16 +4197,8 @@ function needsBatchToday(itemId, dateStr){
     const avgPrior = prior.reduce((a,b) => a + b, 0) / prior.length;
     obsAll.push((e.sold || 0) > SPIKE_MULT * avgPrior ? avgPrior : (e.sold || 0));
   }
-  // Exclude "didn't offer" days (no made, no carry) — see itemSignal comment.
-  // NOTE: original code had `e.carry_in` here (snake_case) but allE entries use
-  // camelCase `carryIn`, so the check silently always returned false on the
-  // carry-only days, dropping legitimate sold-from-carry days out of the average.
-  // Fixed to `carryIn` here.
-  const offeredIdxs = allE
-    .map((e, i) => ({e, i}))
-    .filter(({e}) => (e.made||0) > 0 || (e.carryIn||0) > 0);
-  const avgDemand = offeredIdxs.length
-    ? offeredIdxs.reduce((s, {i}) => s + obsAll[i], 0) / offeredIdxs.length
+  const avgDemand = obsAll.length
+    ? obsAll.reduce((a,b) => a + b, 0) / obsAll.length
     : 5;
   const daysLeft = avgDemand > 0 ? Math.floor(carry/avgDemand) : 99;
   // Need batch if carry covers < ~1 day of demand (10% safety buffer)
@@ -4222,7 +4229,10 @@ function genDaily(){
       flagRows.push({c, sig}); return;
     }
 
-    if(c.shelfDays >= 3){
+    // Bulk-batch routing for ALL multi-day items (shelf >= 2), matching the
+    // edge function and the bulk-baking workflow: bake a batch, sell it down
+    // over the shelf window, skip days where carry still covers demand.
+    if(c.shelfDays >= 2){
       const batch = needsBatchToday(c.id, tomorrow);
       if(!batch.needed && sig.phase !== 'learning'){
         // Skip — enough carry
@@ -4234,9 +4244,12 @@ function genDaily(){
       // Multi-day batch needed — calculate batch size
       const vel = batch.avgDemand;
       const tAdj = sig.adj;
+      // MIN_BAKE: never suggest a commercially non-viable micro-batch. If a
+      // bake is recommended at all, it's at least 10 units (oven/tray reality).
+      const MIN_BAKE = 10;
       const batchRec = sig.phase==='learning'
-        ? sig.rec
-        : Math.max(1, Math.ceil(vel * c.shelfDays * tAdj));
+        ? Math.max(MIN_BAKE, sig.rec)
+        : Math.max(MIN_BAKE, Math.ceil(vel * c.shelfDays * tAdj));
       sig.rec = batchRec;
       sig.reason = sig.phase==='learning'
         ? sig.reason
@@ -4258,8 +4271,10 @@ function genDaily(){
             nextBatch:'Tomorrow — fresh item'});
           return;
         }
-        // Reduce rec by carry-forward already available
-        const netRec = Math.max(0, sig.rec - carry);
+        // Reduce rec by carry-forward already available. If a bake is
+        // suggested at all, floor at 10 (min viable batch — see MIN_BAKE).
+        const netRec0 = Math.max(0, sig.rec - carry);
+        const netRec = netRec0 > 0 ? Math.max(10, netRec0) : 0;
         sig.rec = netRec;
         sig.reason = carry > 0
           ? sig.reason + ` (−${carry} carry)`
@@ -5414,7 +5429,7 @@ function startPreload(){
 <!-- Build version stamp (small, bottom-right). Tap to force a hard reload that
      bypasses the service worker cache — useful when investigating "why am I
      not seeing the new build" issues. The text is the BUILD_ID from sw.js. -->
-<div id="buildStamp" onclick="if(confirm('Force reload and clear cache? This will reload the page and fetch fresh files.')){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>{if(window.caches){caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(()=>location.reload(true));}else{location.reload(true);}});}else{location.reload(true);}}" style="position:fixed;bottom:6px;right:6px;font-size:9px;color:rgba(138,104,64,.45);font-family:monospace;z-index:9998;cursor:pointer;padding:3px 6px;-webkit-tap-highlight-color:transparent;user-select:none;">build j</div>
+<div id="buildStamp" onclick="if(confirm('Force reload and clear cache? This will reload the page and fetch fresh files.')){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>{if(window.caches){caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(()=>location.reload(true));}else{location.reload(true);}});}else{location.reload(true);}}" style="position:fixed;bottom:6px;right:6px;font-size:9px;color:rgba(138,104,64,.45);font-family:monospace;z-index:9998;cursor:pointer;padding:3px 6px;-webkit-tap-highlight-color:transparent;user-select:none;">build k</div>
 
 </body>
 </html>
