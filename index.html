@@ -4261,10 +4261,17 @@ function recentDemandEvidence(itemId){
 function planTier(c, sig, dow){
   if(c.dailyFresh) return 'today';
   if(sig.phase==='learning'){
-    // Genuinely new items being introduced (some history) belong in today's
-    // plan; catalog entries never logged at all sit in Occasional until used.
+    // "Learning" only means thin history (<10 days) — that alone doesn't make
+    // an item NEW. A genuinely-being-introduced item is recently active
+    // (baked within the last 7 logged days); a dormant item with 3 scattered
+    // logs over months is sporadic and must earn presence like everyone else
+    // (demand evidence / regularity below). Never-logged items sit in
+    // Occasional until first use.
     const everLogged = S.logs.some(l=>l.entries.some(e=>e.id===c.id));
-    return everLogged ? 'today' : 'occasional';
+    if(!everLogged) return 'occasional';
+    const bakedRecently = S.logs.slice(-7)
+      .some(l=>l.entries.some(e=>e.id===c.id && (e.made||0)>0));
+    if(bakedRecently) return 'today';
   }
   if(recentDemandEvidence(c.id)) return 'today';
   const reg = bakeRegularity(c.id, dow);
@@ -5543,7 +5550,7 @@ function startPreload(){
 <!-- Build version stamp (small, bottom-right). Tap to force a hard reload that
      bypasses the service worker cache — useful when investigating "why am I
      not seeing the new build" issues. The text is the BUILD_ID from sw.js. -->
-<div id="buildStamp" onclick="if(confirm('Force reload and clear cache? This will reload the page and fetch fresh files.')){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>{if(window.caches){caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(()=>location.reload(true));}else{location.reload(true);}});}else{location.reload(true);}}" style="position:fixed;bottom:6px;right:6px;font-size:9px;color:rgba(138,104,64,.45);font-family:monospace;z-index:9998;cursor:pointer;padding:3px 6px;-webkit-tap-highlight-color:transparent;user-select:none;">build n</div>
+<div id="buildStamp" onclick="if(confirm('Force reload and clear cache? This will reload the page and fetch fresh files.')){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>{if(window.caches){caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(()=>location.reload(true));}else{location.reload(true);}});}else{location.reload(true);}}" style="position:fixed;bottom:6px;right:6px;font-size:9px;color:rgba(138,104,64,.45);font-family:monospace;z-index:9998;cursor:pointer;padding:3px 6px;-webkit-tap-highlight-color:transparent;user-select:none;">build o</div>
 
 </body>
 </html>
