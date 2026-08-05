@@ -886,6 +886,11 @@ body.viewer-mode textarea{
         <label class="fl">Selling Price per Unit (₹)</label>
         <input type="number" id="mprice" min="0" step="0.5" value="0" placeholder="e.g. 45">
       </div>
+      <div>
+        <label class="fl" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="mdaily" style="width:auto;"> Daily fresh bake (savoury — plan full day's demand, don't subtract carry)
+        </label>
+      </div>
     </div>
     <div class="mf">
       <button class="btn btg" onclick="closeModal()">Cancel</button>
@@ -1329,7 +1334,8 @@ async function load(){
     const nm = (settings||[]).find(s=>s.key==='bakery_name');
     if(nm) S.name = nm.value;
     S.catalog = (catalog||[]).map(c=>({id:c.id, name:c.name,
-      shelfDays:c.shelf_days, price:parseFloat(c.price)||0, active:c.active}));
+      shelfDays:c.shelf_days, price:parseFloat(c.price)||0, active:c.active,
+      dailyFresh:!!c.daily_fresh}));
     S.logs = (logs||[]).map(l=>({date:l.log_date, dow:l.day_of_week,
       entries:(l.bakeryiq_log_entries||[]).map(e=>({id:e.item_id, made:e.made, sold:e.sold,
         carryIn:e.carry_in, stockout:e.stockout,
@@ -1405,7 +1411,7 @@ let _srvLogs     = new Map();   // log_date -> { id, entryHash }
 function _hash(obj){ return JSON.stringify(obj); }
 
 function _catalogHash(c){
-  return _hash([c.name, c.shelfDays||1, +c.price||0, !!c.active]);
+  return _hash([c.name, c.shelfDays||1, +c.price||0, !!c.active, !!c.dailyFresh]);
 }
 function _entriesHash(entries){
   // Sort by item_id so order doesn't cause spurious diffs
@@ -1417,7 +1423,8 @@ function _entriesHash(entries){
 function _snapshotFromDb(settings, catalog, logs){
   _srvSettings = new Map(settings.map(s=>[s.key, s.value]));
   _srvCatalog = new Map(catalog.map(c=>[c.id, _catalogHash({
-    name:c.name, shelfDays:c.shelf_days, price:parseFloat(c.price)||0, active:c.active
+    name:c.name, shelfDays:c.shelf_days, price:parseFloat(c.price)||0, active:c.active,
+    dailyFresh:!!c.daily_fresh
   })]));
   _srvLogs = new Map(logs.map(l=>{
     const entries = (l.bakeryiq_log_entries||[]).map(e=>({
@@ -1515,7 +1522,7 @@ async function saveAll(){
     await sbQ('bakeryiq_catalog', {method:'POST', prefer:'resolution=merge-duplicates',
       body: JSON.stringify(catalogToUpsert.map(c => ({
         id: c.id, name: c.name, shelf_days: c.shelfDays||1,
-        price: c.price||0, active: c.active
+        price: c.price||0, active: c.active, daily_fresh: !!c.dailyFresh
       })))});
     catalogToUpsert.forEach(c => _srvCatalog.set(c.id, _catalogHash(c)));
   }
@@ -1653,7 +1660,8 @@ function saveItem(){
   }
   const sd=+document.getElementById('ms').value||1;
   const price=+document.getElementById('mprice').value||0;
-  S.catalog.push({id:'i'+Date.now(),name:n,shelfDays:sd,price,active:true});
+  const dailyFresh = !!document.getElementById('mdaily')?.checked;
+  S.catalog.push({id:'i'+Date.now(),name:n,shelfDays:sd,price,active:true,dailyFresh});
   save();closeModal();buildItemPicker();renderCatalog();toast('Item added ✓');
 }
 
@@ -4229,6 +4237,22 @@ function genDaily(){
       flagRows.push({c, sig}); return;
     }
 
+    // ── DAILY-FRESH ITEMS (savoury: puffs, burger, hot dog…) ──
+    // Bakery policy: these are baked fresh every day to the FULL day's demand.
+    // Carry is NOT subtracted from the plan — leftover stock stays tracked in
+    // carry-forward/expiry views, but freshness drives production. So plan =
+    // ceil(weekday demand × health adj), floored at MIN_BAKE.
+    if(c.dailyFresh){
+      const rec = Math.max(10, sig.phase==='learning' ? sig.rec : Math.ceil((sig.demEst||0) * sig.adj));
+      sig.rec = rec;
+      sig.reason = sig.phase==='learning'
+        ? sig.reason
+        : `Daily fresh: ${(sig.demEst||0).toFixed(1)}/day (${DAYSF[dow].slice(0,3)}) × ${sig.adjLabel}`;
+      makeRows.push({c, sig, isBatch:false});
+      grandTotal += rec;
+      return;
+    }
+
     // Bulk-batch routing for ALL multi-day items (shelf >= 2), matching the
     // edge function and the bulk-baking workflow: bake a batch, sell it down
     // over the shelf window, skip days where carry still covers demand.
@@ -4454,7 +4478,8 @@ function renderCatalog(){
     const trendEl=d?d.trend==='up'?'<span class="tu">▲</span>':d.trend==='down'?'<span class="td2">▼</span>':'<span class="ts">→</span>':'—';
     return `<tr>
       <td style="font-weight:700">${c.name}</td>
-      <td><span class="${c.shelfDays>=3?'tm2':'tf'}">${c.shelfDays}d expiry</span></td>
+      <td><span class="${c.shelfDays>=3?'tm2':'tf'}">${c.shelfDays}d expiry</span>
+        <span class="editor-only" onclick="toggleDailyFresh('${c.id}')" title="Daily fresh: plan = full day's demand, carry not subtracted" style="cursor:pointer;margin-left:4px;font-size:.62rem;padding:2px 6px;border-radius:8px;border:1px solid ${c.dailyFresh?'var(--gr)':'var(--mu)'};color:${c.dailyFresh?'var(--gr)':'var(--mu)'};font-weight:700;">${c.dailyFresh?'🔥 DAILY':'batch'}</span></td>
       <td style="text-align:center">${c.shelfDays||1}d</td>
       <td>
         <span style="font-family:'Libre Baskerville',serif;font-weight:700;font-size:.85rem;color:var(--ink)">₹${c.price||0}</span>
@@ -4472,6 +4497,12 @@ function renderCatalog(){
       </td></tr>`;}).join('');
 }
 
+function toggleDailyFresh(id){
+  const c = S.catalog.find(x=>x.id===id); if(!c) return;
+  c.dailyFresh = !c.dailyFresh;
+  save(); renderCatalog();
+  toast(c.name + (c.dailyFresh ? ' → Daily fresh bake 🔥' : ' → Batch mode'));
+}
 function toggleActive(id){const c=cat(id);if(!c)return;c.active=!c.active;save();renderCatalog();buildItemPicker();toast((c.active?'Activated':'Deactivated')+': '+c.name);}
 
 // Delete catalog item with strong safeguards
@@ -5429,7 +5460,7 @@ function startPreload(){
 <!-- Build version stamp (small, bottom-right). Tap to force a hard reload that
      bypasses the service worker cache — useful when investigating "why am I
      not seeing the new build" issues. The text is the BUILD_ID from sw.js. -->
-<div id="buildStamp" onclick="if(confirm('Force reload and clear cache? This will reload the page and fetch fresh files.')){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>{if(window.caches){caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(()=>location.reload(true));}else{location.reload(true);}});}else{location.reload(true);}}" style="position:fixed;bottom:6px;right:6px;font-size:9px;color:rgba(138,104,64,.45);font-family:monospace;z-index:9998;cursor:pointer;padding:3px 6px;-webkit-tap-highlight-color:transparent;user-select:none;">build k</div>
+<div id="buildStamp" onclick="if(confirm('Force reload and clear cache? This will reload the page and fetch fresh files.')){if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))).then(()=>{if(window.caches){caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(()=>location.reload(true));}else{location.reload(true);}});}else{location.reload(true);}}" style="position:fixed;bottom:6px;right:6px;font-size:9px;color:rgba(138,104,64,.45);font-family:monospace;z-index:9998;cursor:pointer;padding:3px 6px;-webkit-tap-highlight-color:transparent;user-select:none;">build l</div>
 
 </body>
 </html>
